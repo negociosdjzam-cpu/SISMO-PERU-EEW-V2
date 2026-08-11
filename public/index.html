@@ -11,7 +11,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" href="/icons/icon-192.png">
-<title>AUREO SISMO PERÚ · Monitoreo en tiempo real</title>
+<title>AUREO SISMO PERÚ · Monitoreo en tiempo real V2.8</title>
 <style>
 :root{
   --bg1:#0d3a53;--bg2:#18566d;--bg3:#183f59;
@@ -325,7 +325,7 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
     </section>
 
     <div class="m-mini-grid">
-      <div class="m-card m-mini"><div class="ico">📡</div><b id="mStations">0</b><small>estaciones</small></div>
+      <div class="m-card m-mini"><div class="ico">📡</div><b id="mStations">0</b><small>con señal actual</small></div>
       <div class="m-card m-mini"><div class="ico">〽️</div><b id="mPackets">0</b><small>lecturas sesión</small></div>
       <div class="m-card m-mini"><div class="ico">🕒</div><b id="mLast">—</b><small>última señal</small></div>
     </div>
@@ -640,42 +640,97 @@ function secondsOld(iso){
 }
 function waveformHealth(t){
   const w=t.waveform?.status||{}, gs=w.servers?.GEOFON||{};
-  const last=w.last_waveform_at||gs.last_waveform_at;
-  const sec=secondsOld(last);
+  const waveformAt=w.last_waveform_at||gs.last_waveform_at;
+  const receivedAt=w.last_packet_received_at||gs.last_packet_received_at;
+  const dataAge=secondsOld(waveformAt);
+  const transportAge=secondsOld(receivedAt);
   const packets=n(w.packets||gs.packets);
-  const stations=n(w.stations||gs.stations);
+  const configured=n(w.stations||gs.stations);
 
-  // V2.6: estado estable con histéresis.
-  // Si SeedLink sigue en streaming, la red se considera ACTIVA aunque una
-  // lectura concreta tarde decenas de segundos. La antigüedad se muestra
-  // como telemetría, no como una falsa alarma de red.
-  if(gs.state==="streaming" && stations>0){
+  // V2.8: NO confundimos "socket abierto" con "datos sísmicos actuales".
+  // Para estar ACTIVA necesitamos datos sísmicos recientes.
+  if(configured>0 && packets>0 && dataAge<=90){
     networkLatch.lastGoodAt=Date.now();
-    return {key:"live",label:"Activa",caption:"Monitoreo sísmico operativo",color:"#79efaa",fresh:sec<=90,ageSec:sec};
+    return {
+      key:"live", label:"Activa",
+      caption:"Datos sísmicos actuales entrando",
+      color:"#79efaa", fresh:true,
+      dataAgeSec:dataAge, transportAgeSec:transportAge
+    };
   }
 
-  // Si el estado técnico cambia brevemente durante AUTOHEAL pero recibimos
-  // datos hace menos de 90 s, mantenemos el estado estable.
-  if(stations>0 && packets>0 && sec<=90){
-    networkLatch.lastGoodAt=Date.now();
-    return {key:"live",label:"Activa",caption:"Recibiendo datos · enlace en revalidación automática",color:"#79efaa",fresh:true,ageSec:sec};
+  // El gateway puede seguir recibiendo paquetes cuyo timestamp sísmico es antiguo.
+  // Lo mostramos expresamente, nunca como "todo normal".
+  if(Number.isFinite(transportAge) && transportAge<=30 && dataAge>180){
+    return {
+      key:"delayed", label:"Datos atrasados",
+      caption:`La conexión recibe datos, pero la señal sísmica tiene ${Math.round(dataAge/60)} min de retraso`,
+      color:"#ffb84f", fresh:false,
+      dataAgeSec:dataAge, transportAgeSec:transportAge
+    };
   }
 
-  // Grace period de 2 minutos para evitar saltos visuales por reconexiones cortas.
-  if(networkLatch.lastGoodAt && Date.now()-networkLatch.lastGoodAt<=120000){
-    return {key:"live",label:"Activa",caption:"Monitoreo activo · revalidando una conexión secundaria",color:"#79efaa",fresh:false,ageSec:sec};
+  if(configured>0 && packets>0 && dataAge<=180){
+    return {
+      key:"checking", label:"Verificando señal",
+      caption:"La última lectura está tardando más de lo normal",
+      color:"#ffe07a", fresh:false,
+      dataAgeSec:dataAge, transportAgeSec:transportAge
+    };
   }
 
-  if(stations>0 && packets>0 && sec<=180){
-    return {key:"checking",label:"Enlace en revisión",caption:"No hay una lectura reciente; AUTOHEAL está comprobando continuidad",color:"#ffe07a",fresh:false,ageSec:sec};
+  if(gs.state==="streaming"){
+    return {
+      key:"connected_no_data", label:"Conectada · sin señal reciente",
+      caption:"El enlace está abierto, pero no hay datos sísmicos recientes",
+      color:"#ffd05c", fresh:false,
+      dataAgeSec:dataAge, transportAgeSec:transportAge
+    };
   }
 
   if(gs.state==="resolving" || gs.state==="discovered"){
-    return {key:"starting",label:"Iniciando",caption:"Preparando estaciones de monitoreo",color:"#9bdfff",fresh:false,ageSec:sec};
+    return {
+      key:"starting", label:"Iniciando",
+      caption:"Preparando estaciones de monitoreo",
+      color:"#9bdfff", fresh:false,
+      dataAgeSec:dataAge, transportAgeSec:transportAge
+    };
   }
 
-  return {key:"stale",label:"Sin señal reciente",caption:"AUTOHEAL está intentando recuperar el flujo",color:"#ffe07a",fresh:false,ageSec:sec};
+  return {
+    key:"stale", label:"Sin señal reciente",
+    caption:"AUTOHEAL está intentando recuperar el flujo",
+    color:"#ffb84f", fresh:false,
+    dataAgeSec:dataAge, transportAgeSec:transportAge
+  };
 }
+
+function stationTruth(t){
+  const w=t.waveform?.status||{}, gs=w.servers?.GEOFON||{};
+  const configured=n(w.stations||gs.stations);
+  const activity=w.station_activity||{};
+  const rows=Object.entries(activity).map(([id,s])=>({id,...s}))
+    .filter(s=>s.last_waveform_at && Number.isFinite(new Date(s.last_waveform_at).getTime()));
+  const fresh=rows.filter(s=>secondsOld(s.last_waveform_at)<=90);
+  const delayed=rows.filter(s=>secondsOld(s.last_waveform_at)>90);
+  return {
+    configured,
+    hasDetail:rows.length>0,
+    rows,
+    fresh,
+    delayed,
+    activeCount:fresh.length
+  };
+}
+
+function stationDataLabel(s){
+  const sec=secondsOld(s?.last_waveform_at);
+  if(!Number.isFinite(sec))return {text:"Sin lectura",cls:"off"};
+  if(sec<=90)return {text:"Señal actual",cls:""};
+  if(sec<=180)return {text:"Señal retrasada",cls:"review"};
+  return {text:"Dato antiguo",cls:"off"};
+}
+
 function uptime(iso){
   if(!iso)return "—";
   let sec=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
@@ -724,10 +779,16 @@ function statusModel(t){
     return {key:"review",level:"SEÑAL AISLADA EN REVISIÓN",sub:"Una estación detectó algo inusual. Por sí sola no significa que exista un sismo.",color:"var(--yellow)",icon:"?",progress:.34};
 
   if(h.key==="live")
-    return {key:"normal",level:"MONITOREO NORMAL",sub:"La red está activa y no hay coincidencias sísmicas relevantes en este momento.",color:"var(--green)",icon:"✓",progress:.86};
+    return {key:"normal",level:"MONITOREO NORMAL",sub:"Los datos sísmicos son actuales y no hay coincidencias relevantes.",color:"var(--green)",icon:"✓",progress:.86};
+
+  if(h.key==="delayed")
+    return {key:"delayed",level:"DATOS SÍSMICOS ATRASADOS",sub:"La conexión está abierta, pero las lecturas no son suficientemente recientes para declarar monitoreo normal.",color:"var(--orange)",icon:"!",progress:.52};
 
   if(h.key==="checking")
-    return {key:"checking",level:"VERIFICANDO CONEXIÓN",sub:"La red tuvo actividad reciente. El sistema está comprobando que el flujo continúe estable.",color:"var(--yellow)",icon:"↻",progress:.55};
+    return {key:"checking",level:"VERIFICANDO SEÑAL",sub:"La última lectura está tardando más de lo esperado.",color:"var(--yellow)",icon:"↻",progress:.55};
+
+  if(h.key==="connected_no_data")
+    return {key:"connected_no_data",level:"SIN SEÑAL RECIENTE",sub:"Hay conexión técnica con el servidor, pero no están llegando datos sísmicos actuales.",color:"var(--yellow)",icon:"!",progress:.42};
 
   if(h.key==="starting")
     return {key:"starting",level:"INICIANDO MONITOREO",sub:"Preparando la conexión con las estaciones sísmicas.",color:"var(--blue)",icon:"↻",progress:.38};
@@ -753,9 +814,14 @@ function aiNarrative(t,m){
     `La red está estable y ya procesó ${fmt(packets)} paquetes. Se registraron ${picks} señal(es) aislada(s) durante esta sesión, pero ninguna mantiene coincidencia activa ahora.`,
     "El sistema permanece en observación y descarta señales que no se repiten en varias estaciones."
   ];
-  if(waveformHealth(t).key==="live") return [
-    `La red está activa. Estamos recibiendo datos de ${fmt(w.stations||gs.stations)} estaciones y no hay coincidencias sísmicas relevantes en este momento.`,
-    es.state==="error" ? "Una fuente secundaria está reintentando su conexión, pero el monitoreo principal continúa recibiendo datos." : "El monitoreo continúa automáticamente las 24 horas."
+  const health=waveformHealth(t);
+  if(health.key==="live") return [
+    `La señal sísmica es actual. El sistema recibe datos recientes y no hay coincidencias relevantes en este momento.`,
+    "Continuamos monitoreando automáticamente."
+  ];
+  if(health.key==="delayed") return [
+    `La conexión está recibiendo información, pero los datos sísmicos llegan atrasados. No los consideramos señal actual.`,
+    "AUTOHEAL continuará intentando recuperar un flujo realmente en tiempo real."
   ];
   return [
     "El sistema está intentando restablecer la recepción de datos sísmicos. La interfaz seguirá actualizándose automáticamente.",
@@ -799,19 +865,32 @@ function stationClass(lastIso){
 function stationLabel(cls){return cls==="off"?"Sin actividad":cls==="review"?"Actividad lenta":"Recibiendo"}
 function stationTagClass(cls){return cls==="review"?"review":cls==="off"?"off":""}
 function renderStations(t){
-  const row=$("#stationRow"), acts=t.waveform?.status?.station_activity||{};
-  let stations=Object.entries(acts).map(([id,s])=>({id,...s}));
-  if(!stations.length)stations=fallbackStations.map(([id,lat,lon])=>({id,station_id:id,lat,lon,packets:0,last_waveform_at:null,channel:"HH?"}));
-  stations.sort((a,b)=>n(b.packets)-n(a.packets));
+  const row=$("#stationRow");
+  const truth=stationTruth(t);
+
+  if(!truth.hasDetail){
+    row.innerHTML=`
+      <div class="station off" style="grid-column:1/-1;min-height:92px;display:flex;flex-direction:column;justify-content:center">
+        <div class="station-top">ℹ Detalle por estación no disponible todavía</div>
+        <div class="station-sub" style="white-space:normal;margin-top:7px">
+          El gateway reporta ${truth.configured||0} estaciones configuradas, pero aún no está enviando telemetría individual real.
+          No mostramos HH?, tiempos ni paquetes inventados.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const stations=[...truth.rows].sort((a,b)=>secondsOld(a.last_waveform_at)-secondsOld(b.last_waveform_at));
   const per=5,start=(stationPage*per)%Math.max(per,stations.length),show=[];
   for(let i=0;i<Math.min(per,stations.length);i++)show.push(stations[(start+i)%stations.length]);
+
   row.innerHTML=show.map(s=>{
-    const id=s.station_id||s.id,cls=stationClass(s.last_waveform_at),hist=stationHistory.get(id)||[0];
-    return `<div class="station ${cls}">
-      <div class="station-top"><span class="status-dot ${cls==="off"?"":cls==="review"?"warn":"ok"}"></span>${id}</div>
-      <div class="station-sub">${s.channel||"HH?"} · ${fmt(s.packets)} paquetes</div>
+    const label=stationDataLabel(s), hist=stationHistory.get(s.id)||[0];
+    return `<div class="station ${label.cls}">
+      <div class="station-top"><span class="status-dot ${label.cls==="off"?"":label.cls==="review"?"warn":"ok"}"></span>${s.id}</div>
+      <div class="station-sub">${s.channel||"canal no reportado"} · ${fmt(s.packets)} paquetes reales</div>
       <div class="flow"><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="${sparkPath(hist)}"/></svg></div>
-      <span class="tag ${stationTagClass(cls)}">${stationLabel(cls)}</span>
+      <span class="tag ${stationTagClass(label.cls)}">${label.text} · ${age(s.last_waveform_at)}</span>
     </div>`;
   }).join("");
 }
@@ -1027,18 +1106,24 @@ function renderMobile(t){
   const stations=n(w.stations||gs.stations),packets=n(w.packets||gs.packets);
 
   $("#mNetwork").textContent=h.key==="live"?"ACTIVA":h.label.toUpperCase();
-  $("#mNetwork").style.color=h.key==="live"?"#61e68f":"#ffd35b";
-  $("#mNetworkSub").textContent=lvl>0?(a.title||"Revisión"):"Monitoreo normal";
-  $("#mNetworkMsg").textContent=lvl>0?(a.message||"Analizando señal."):"La red está operativa y sin eventos relevantes.";
-  $("#mStations").textContent=stations;
+  $("#mNetwork").style.color=h.key==="live"?"#61e68f":h.key==="delayed"?"#ffb84f":"#ffd35b";
+  $("#mNetworkSub").textContent=lvl>0?(a.title||"Revisión"):(h.key==="live"?"Monitoreo normal":h.label);
+  $("#mNetworkMsg").textContent=lvl>0?(a.message||"Analizando señal."):h.caption;
+  const truth=stationTruth(t);
+  $("#mStations").textContent=truth.hasDetail?truth.activeCount:"—";
   $("#mPackets").textContent=packets;
   $("#mLast").textContent=mobileAge(w.last_waveform_at||gs.last_waveform_at);
 
-  const answer=lvl>=2?"SÍ":lvl===1?"POSIBLE":"NO";
-  const colors=lvl>=2?"#ff5a58":lvl===1?"#ffd34f":"#64e991";
+  const dataReliable=h.key==="live";
+  const answer=lvl>=2?"SÍ":lvl===1?"POSIBLE":dataReliable?"NO":"SIN DATOS";
+  const colors=lvl>=2?"#ff5a58":lvl===1?"#ffd34f":dataReliable?"#64e991":"#ffb84f";
   $("#mDangerAnswer").textContent=answer;$("#mDangerAnswer").style.color=colors;
   $("#mDangerIcon").textContent=lvl>=2?"!":lvl===1?"?":"✓";$("#mDangerIcon").style.color=colors;$("#mDangerIcon").style.borderColor=colors;
-  $("#mDangerText").textContent=lvl>0?(a.action?`${a.title}. ${a.action}`:a.title):"No hay indicios de un evento relevante. Seguimos monitoreando.";
+  $("#mDangerText").textContent=lvl>0
+    ? (a.action?`${a.title}. ${a.action}`:a.title)
+    : dataReliable
+      ? "No hay indicios de un evento relevante con los datos actuales."
+      : "No hay datos sísmicos suficientemente recientes para afirmar que todo está normal.";
   $("#mLevel").textContent=lvl;
   $("#mLevel").style.color=colors;
   $("#mLevelText").textContent=lvl===0?"Normal":lvl===1?"Prepárate":lvl===2?"Protégete":"Oficial";
@@ -1048,24 +1133,37 @@ function renderMobile(t){
   const igp=(t.events?.latest?.sources||[]).includes("IGP");
   $("#mIgp").textContent=igp?"OK":"espera";$("#mIgp").className=igp?"m-ok":"m-wait";
 
-  $("#mZoneState").textContent=lvl>=2?"Evento relevante":lvl===1?"Señal en evaluación":"Sin eventos";
+  $("#mZoneState").textContent=lvl>=2?"Evento relevante":lvl===1?"Señal en evaluación":dataReliable?"Sin eventos":"Datos no actuales";
   $("#mZoneState").style.color=colors;
-  $("#mZoneText").textContent=lvl>0?(a.message||"Analizando señal."):"No se detectan eventos relevantes en la zona.";
+  $("#mZoneText").textContent=lvl>0
+    ? (a.message||"Analizando señal.")
+    : dataReliable
+      ? "No se detectan eventos relevantes con los datos actuales."
+      : "Esperando señal sísmica reciente antes de evaluar la zona.";
 
-  const acts=w.station_activity||{};
-  let rows=Object.entries(acts).map(([id,x])=>({id,...x}));
-  if(!rows.length){
-    rows=(w.stations||gs.stations)?[
-      {id:"CX.PB18",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
-      {id:"CX.PB16",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
-      {id:"CX.PB12",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
-      {id:"CX.MNMCX",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
-      {id:"CX.PSGCX",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0}
-    ]:[];
+  const truthStations=stationTruth(t);
+  if(!truthStations.hasDetail){
+    $("#mStationScroll").innerHTML=`
+      <div class="m-stn" style="min-width:100%;border-color:#6c5426">
+        <b>ℹ Sin detalle real por estación</b>
+        <small>${truthStations.configured||0} estaciones están configuradas.</small>
+        <small>Esperando telemetría individual del gateway.</small>
+      </div>`;
+    $("#mStationsMore").textContent=`${truthStations.configured||0} configuradas`;
+  }else{
+    const rows=[...truthStations.rows].sort((a,b)=>secondsOld(a.last_waveform_at)-secondsOld(b.last_waveform_at));
+    $("#mStationScroll").innerHTML=rows.slice(0,8).map(s=>{
+      const label=stationDataLabel(s);
+      const bars=label.cls===""?"▮▮▮▮":label.cls==="review"?"▮▮▮▯":"▮▯▯▯";
+      return `<div class="m-stn">
+        <div class="m-bars" style="color:${label.cls===""?"#59df82":label.cls==="review"?"#ffd35b":"#8899a1"}">${bars}</div>
+        <b>${s.id}</b>
+        <small>${s.channel||"canal no reportado"} · ${fmt(s.packets)} paquetes</small>
+        <small>${label.text}: ${mobileAge(s.last_waveform_at)}</small>
+      </div>`;
+    }).join("");
+    $("#mStationsMore").textContent=`${truthStations.activeCount} actuales / ${truthStations.configured} configuradas`;
   }
-  rows.sort((x,y)=>n(y.packets)-n(x.packets));
-  $("#mStationScroll").innerHTML=rows.slice(0,8).map(s=>`<div class="m-stn"><div class="m-bars">▮▮▮▮</div><b>${s.id||s.station_id}</b><small>${s.channel||"HH?"}</small><small>última: ${mobileAge(s.last_waveform_at)}</small></div>`).join("") || `<div class="m-stn"><b>Conectando…</b><small>esperando estaciones</small></div>`;
-  $("#mStationsMore").textContent=`${stations} conectadas`;
 
   updateAlertButtons();
   updateInstallUi();
@@ -1176,8 +1274,11 @@ function render(t){
   $("#networkState").textContent=health.label;
   $("#networkState").style.color=health.color;
   $("#networkCaption").textContent=health.caption;
-  $("#stationsTop").textContent=fmt(w.stations||gs.stations);
-  $("#stationsCaption").textContent=(w.stations||gs.stations)>0?`${fmt(gs.stations||w.stations)} estaciones disponibles`:"preparando estaciones";
+  const truth=stationTruth(t);
+  $("#stationsTop").textContent=truth.hasDetail?fmt(truth.activeCount):"—";
+  $("#stationsCaption").textContent=truth.hasDetail
+    ? `${truth.activeCount} con señal actual · ${truth.configured} configuradas`
+    : `${truth.configured||0} configuradas · esperando detalle real`;
   $("#packetsTop").textContent=fmt(w.packets||gs.packets);
   $("#lastActivityTop").textContent=age(w.last_waveform_at||gs.last_waveform_at).replace("hace ","hace ");
   setDot($("#emscDot"),src.EMSC?.state);setDot($("#usgsDot"),src.USGS?.state);
@@ -1195,7 +1296,9 @@ function render(t){
   const [summary,action]=aiNarrative(t,m);$("#aiSummary").textContent=summary;$("#aiAction").textContent=action;$("#aiTopState").textContent=m.key==="normal"?"Monitoreo continuo 24/7":"Revisión inteligente en curso";
 
   $("#statPackets").textContent=fmt(w.packets||gs.packets);$("#statPicks").textContent=fmt(d.totalPicks);$("#statStations").textContent=fmt(w.stations||gs.stations);$("#statUptime").textContent=uptime(w.started_at);
-  $("#sidebarSafe").textContent=networkOk?"Monitoreo activo":health.key==="starting"?"Iniciando monitoreo":"Conexión en revisión";
+  $("#sidebarSafe").textContent=networkOk?"Monitoreo activo":
+    health.key==="delayed"?"Datos atrasados":
+    health.key==="starting"?"Iniciando monitoreo":"Señal en revisión";
 
   renderStations(t);renderMap(t);renderActivity(t);renderSources(t);renderMobile(t);
   packetHistory.push(n(w.packets||gs.packets));if(packetHistory.length>100)packetHistory.shift();

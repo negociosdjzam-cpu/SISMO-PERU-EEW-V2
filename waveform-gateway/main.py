@@ -11,7 +11,7 @@ from health import serve
 
 S=load_settings()
 STATUS={
-    'version':'2.4-ui-telemetry-autoheal-static-fallback',
+    'version':'2.8-truthful-station-telemetry-autoheal',
     'station_activity':{},
     'started_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),
     'picker_requested':S.picker_mode,
@@ -68,10 +68,22 @@ class Client(EasySeedLinkClient):
         if not meta:
             return
         endtime=str(trace.stats.endtime)
+        received_at=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
+        try:
+            waveform_epoch=float(trace.stats.endtime.timestamp)
+            data_delay_sec=max(0.0,time.time()-waveform_epoch)
+        except Exception:
+            data_delay_sec=None
+
         STATUS['last_waveform_at']=endtime
+        STATUS['last_packet_received_at']=received_at
+        STATUS['last_data_delay_sec']=round(data_delay_sec,3) if data_delay_sec is not None else None
         STATUS['packets']=STATUS.get('packets',0)+1
+
         s=STATUS['servers'].setdefault(self.source_name,{})
         s['last_waveform_at']=endtime
+        s['last_packet_received_at']=received_at
+        s['last_data_delay_sec']=round(data_delay_sec,3) if data_delay_sec is not None else None
         s['packets']=s.get('packets',0)+1
 
         station_id=f"{meta.network}.{meta.station}"
@@ -86,10 +98,14 @@ class Client(EasySeedLinkClient):
             'lon':meta.lon,
             'channel':channel,
             'packets':0,
-            'last_waveform_at':None
+            'last_waveform_at':None,
+            'last_packet_received_at':None,
+            'data_delay_sec':None
         })
         a['packets']=a.get('packets',0)+1
         a['last_waveform_at']=endtime
+        a['last_packet_received_at']=received_at
+        a['data_delay_sec']=round(data_delay_sec,3) if data_delay_sec is not None else None
         a['channel']=channel
         try:
             picker.feed(trace,meta)
@@ -248,7 +264,7 @@ for srv in load_servers():
     ).start()
 
 print(
-    f"SISMO PERU WAVEFORM GATEWAY V2.4 UI TELEMETRY + AUTOHEAL listo. "
+    f"AUREO SISMO PERU WAVEFORM V2.8 TELEMETRIA REAL + AUTOHEAL listo. "
     f"health :{S.gateway_port}; picker={STATUS['picker_active']}; "
     f"static_fallback={S.static_fallback}",
     flush=True

@@ -1,4 +1,4 @@
-const CACHE="aureo-sismo-v2.7-shell-1";
+const CACHE="aureo-sismo-v2.8-shell-1";
 const SHELL=[
   "/",
   "/manifest.webmanifest",
