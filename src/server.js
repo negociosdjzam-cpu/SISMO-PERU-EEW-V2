@@ -4,6 +4,7 @@ import { SensorLab } from "./core/sensorLab.js";
 import { inBounds } from "./core/geo.js";
 import { EmscSource } from "./sources/emsc.js";
 import { UsgsSource } from "./sources/usgs.js";
+import { PushManager } from "./pushManager.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -26,6 +27,8 @@ try {
 }
 
 const status = {};
+const pushManager = new PushManager();
+let lastPushedAlertKey = "";
 let waveformTelemetry = {
   receivedAt:null,
   sentAt:null,
@@ -53,12 +56,31 @@ function publish(type, payload) {
   }
 }
 
-fusion.onEvent(ev => publish("fusion", ev));
+async function maybeDispatchPush(reason="state-change") {
+  try{
+    const alert=buildAlertState();
+    const level=Number(alert?.level||0);
+    if(level<=0) return;
+    const key=`${level}:${alert?.eventId||alert?.code||""}`;
+    if(key===lastPushedAlertKey) return;
+    lastPushedAlertKey=key;
+    const result=await pushManager.broadcast(alert);
+    publish("push_dispatch",{reason,alert,result,at:new Date().toISOString()});
+  }catch(e){
+    console.error("[PUSH] dispatch error:",e);
+  }
+}
+
+fusion.onEvent(ev => {
+  publish("fusion", ev);
+  queueMicrotask(() => maybeDispatchPush("fusion"));
+});
 sensorLab.onTrigger(x => publish("sensor_trigger", x));
 sensorLab.onCandidate(c => {
   sensorCandidates.unshift(c);
   sensorCandidates.splice(20);
   publish("sensor_candidate", c);
+  queueMicrotask(() => maybeDispatchPush("sensor_candidate"));
 });
 
 function onStatus(s) {
@@ -178,7 +200,7 @@ function telemetryPayload() {
   return {
     ok:true,
     service:"SISMO PERU EEW TELEMETRY",
-    version:"2.6.0",
+    version:"2.7.0",
     now:new Date().toISOString(),
     warning:"Telemetría experimental. Un PICK no equivale a terremoto ni a alerta oficial.",
     targets,
@@ -190,6 +212,7 @@ function telemetryPayload() {
       latest:sensorCandidates[0] || null
     },
     alert:buildAlertState(),
+    push:pushManager.status(),
     events:{
       count:fusion.list(500).length,
       latest:fusion.latest()
@@ -201,7 +224,7 @@ app.get("/health", (_req,res) => {
   res.json({
     ok:true,
     service:"SISMO PERU FUSION ENGINE",
-    version:"2.6.0",
+    version:"2.7.0",
     now:new Date().toISOString(),
     sources:status,
     waveformTelemetryAt:waveformTelemetry.receivedAt
@@ -224,6 +247,48 @@ app.get("/api/eew/status", (_req,res) => {
 
 app.get("/api/eew/telemetry", (_req,res) => res.json(telemetryPayload()));
 app.get("/api/eew/alert-state", (_req,res) => res.json({ok:true,alert:buildAlertState()}));
+app.get("/api/push/public-key", (_req,res) => {
+  const s=pushManager.status();
+  res.json({ok:true,configured:s.configured,publicKey:s.publicKey,subscribers:s.subscribers});
+});
+
+app.get("/api/push/status", (_req,res) => {
+  res.json({ok:true,...pushManager.status()});
+});
+
+app.post("/api/push/subscribe", (req,res) => {
+  try{
+    const s=pushManager.upsert(req.body?.subscription,req.body?.prefs||{});
+    res.json({ok:true,...s});
+  }catch(e){
+    res.status(400).json({ok:false,error:e.message});
+  }
+});
+
+app.post("/api/push/unsubscribe", (req,res) => {
+  const s=pushManager.remove(req.body?.subscription || req.body?.endpoint);
+  res.json({ok:true,...s});
+});
+
+app.post("/api/push/test", async (req,res) => {
+  const subscription=req.body?.subscription;
+  const level=Math.max(1,Math.min(2,Number(req.body?.level||1)));
+  const alert={
+    level,
+    code:"PUSH_TEST",
+    severity:level>=2?"danger":"warning",
+    title:level>=2?"PRUEBA DE ALERTA · PROTÉGETE":"PRUEBA DE PREALERTA",
+    message:"Esta es una prueba de AUREO SISMO PERÚ. No corresponde a un sismo real.",
+    action:level>=2?"AGÁCHATE · CÚBRETE · SUJÉTATE":"PREPÁRATE PARA PROTEGERTE",
+    source:"Prueba local",
+    eventId:`TEST-${Date.now()}`,
+    experimental:true,
+    at:new Date().toISOString()
+  };
+  const result=await pushManager.sendToSubscription(subscription,alert);
+  res.status(result.ok?200:503).json(result);
+});
+
 app.get("/api/eew/latest", (_req,res) => res.json({ok:true,event:fusion.latest()}));
 app.get("/api/eew/events", (req,res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
@@ -239,7 +304,7 @@ app.get("/api/eew/stream", (req,res) => {
     "X-Accel-Buffering":"no"
   });
   res.flushHeaders?.();
-  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,version:"2.6.0",now:new Date().toISOString()})}\n\n`);
+  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,version:"2.7.0",now:new Date().toISOString()})}\n\n`);
   sseClients.add(res);
   const keep = setInterval(() => {
     try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
@@ -326,6 +391,6 @@ app.get("/api/eew/public-signal", (_req,res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[SISMO PERU EEW V2.6] escuchando en :${PORT}`);
-  console.log(`[SISMO PERU EEW V2.6] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
+  console.log(`[AUREO SISMO PERU V2.7] escuchando en :${PORT}`);
+  console.log(`[AUREO SISMO PERU V2.7] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
 });

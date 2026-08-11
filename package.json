@@ -1,8 +1,8 @@
 {
-  "name": "sismo-peru-fusion-engine",
-  "version": "2.0.0",
+  "name": "aureo-sismo-peru",
+  "version": "2.7.0",
   "private": true,
-  "description": "SISMO PERU EEW V2: Fusion multifuente + Waveform Gateway SeedLink + P-wave picker",
+  "description": "AUREO SISMO PERU V2.7: monitoreo sismico, PWA movil instalable y Web Push",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "ws": "^8.21.3"
+    "ws": "^8.21.3",
+    "web-push": "^3.6.7"
   }
 }

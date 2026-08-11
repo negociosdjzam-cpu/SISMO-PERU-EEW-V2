@@ -3,8 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#123d57">
-<title>SISMO PERÚ · Centro de Monitoreo Inteligente</title>
+<meta name="theme-color" content="#071c2a">
+<meta name="application-name" content="AUREO SISMO PERÚ">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SISMO PERÚ">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" href="/icons/icon-192.png">
+<title>AUREO SISMO PERÚ · Monitoreo en tiempo real</title>
 <style>
 :root{
   --bg1:#0d3a53;--bg2:#18566d;--bg3:#183f59;
@@ -257,9 +264,136 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
   .app{display:block}.sidebar{display:none}.header{height:auto;min-height:70px;padding:10px 12px;flex-wrap:wrap}.header-brand{min-width:0}.header-wave{display:none}.ai-top{margin-left:auto;min-width:160px}.datebox{order:3;text-align:left}.content{padding:10px}
   .metrics{grid-template-columns:1fr 1fr}.metrics .metric:last-child{grid-column:span 2}.top-grid,.bottom-grid{grid-template-columns:1fr}.map-card,.stats{grid-column:auto}.hero-inner{grid-template-columns:112px 1fr}.risk-ring{width:106px;height:106px}.station-row{grid-template-columns:repeat(2,1fr)}.ai-card{grid-template-columns:82px 1fr}.ai-orb{width:68px;height:68px}.header-brand strong{font-size:18px}
 }
+
+/* ===========================
+   V2.7 MOBILE PWA
+   =========================== */
+.mobile-pwa{display:none}
+.install-toast{display:none;position:fixed;left:12px;right:12px;bottom:84px;z-index:95;background:#092333;border:1px solid rgba(86,220,135,.35);border-radius:18px;padding:13px 14px;box-shadow:0 18px 50px rgba(0,0,0,.45);align-items:center;gap:10px}
+.install-toast.show{display:flex}.install-toast strong{font-size:13px}.install-toast small{display:block;color:#bdd6df;font-size:10px;margin-top:2px}.install-toast button{margin-left:auto;border:0;background:#58df8d;color:#062417;padding:9px 12px;border-radius:11px;font-weight:900}
+
+@media(max-width:760px){
+  body{background:#050e16;font-size:14px;padding-bottom:max(82px,env(safe-area-inset-bottom))}
+  .app{display:none!important}
+  .mobile-pwa{display:block;min-height:100vh;background:
+    radial-gradient(circle at 50% -10%,rgba(35,163,116,.17),transparent 30%),
+    radial-gradient(circle at 110% 28%,rgba(46,126,255,.12),transparent 28%),
+    #050e16;color:#f5fbfd}
+  .m-head{position:sticky;top:0;z-index:55;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;background:rgba(5,14,22,.94);backdrop-filter:blur(18px);border-bottom:1px solid #173442;display:flex;align-items:center;gap:11px}
+  .m-logo{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;border:2px solid #42db86;color:#61ed99;font-size:22px;background:#0b241f}
+  .m-brand{min-width:0;flex:1}.m-brand b{font-size:21px;letter-spacing:.015em}.m-brand small{display:block;color:#aabfc8;font-size:10px;margin-top:1px}
+  .m-bell{border:1px solid #293e4c;background:#0a1a26;color:#eef8fb;border-radius:13px;padding:7px 9px;font-size:10px;font-weight:800;line-height:1.15}
+  .m-bell.on{border-color:#53df89;color:#74f0a2;background:#0a271b}
+  .m-main{padding:13px 12px 18px}
+  .m-card{border:1px solid #1d3d4d;background:linear-gradient(145deg,#0a1b28,#081520);border-radius:19px;box-shadow:0 15px 36px rgba(0,0,0,.16)}
+  .m-status{padding:17px 16px;display:grid;grid-template-columns:90px 1fr;gap:13px;border-color:#245a3d;background:radial-gradient(circle at 13% 45%,rgba(49,209,111,.17),transparent 34%),linear-gradient(145deg,#0a1b28,#081520)}
+  .m-shield{width:86px;height:86px;border:3px solid #4bdd80;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 30px rgba(73,221,128,.12)}.m-shield span{width:51px;height:51px;border-radius:16px;background:#153b2a;display:grid;place-items:center;font-size:29px;color:#65eb94}
+  .m-kicker{font-size:10px;color:#a9bdc5;text-transform:uppercase;letter-spacing:.08em}.m-status-title{font-size:30px;font-weight:950;color:#61e68f;line-height:1;margin:3px 0 5px}.m-status-sub{font-size:13px;font-weight:850}.m-status-msg{font-size:11px;line-height:1.45;color:#c3d5dc;margin-top:5px}
+  .m-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.m-mini{padding:12px 8px;text-align:center;min-width:0}.m-mini .ico{font-size:21px}.m-mini b{font-size:18px;display:block;margin-top:5px}.m-mini small{display:block;color:#9eb4bd;font-size:9px;margin-top:2px;line-height:1.25}
+  .m-danger{margin-top:10px;padding:16px;display:grid;grid-template-columns:62px 1fr 62px;align-items:center;gap:11px}.m-danger-icon{width:58px;height:58px;border:2px solid #62e990;border-radius:50%;display:grid;place-items:center;font-size:31px;color:#68ec97}.m-danger h2{font-size:16px;margin:0;color:#dcecf1}.m-danger .answer{font-size:31px;font-weight:950;color:#64e991;line-height:1;margin-top:3px}.m-danger p{font-size:10.5px;color:#bcd0d8;margin:6px 0 0;line-height:1.38}.m-level{border:1px solid #34526a;border-radius:13px;padding:8px 5px;text-align:center}.m-level small{font-size:8px;color:#9cb6c1}.m-level b{display:block;font-size:27px;color:#63e98f}
+  .m-section{margin-top:10px;padding:14px}.m-section-title{font-size:13px;font-weight:900;margin-bottom:10px;color:#e9f5f8;display:flex;justify-content:space-between;gap:10px}.m-section-title span{color:#6fc7ff;font-size:10px;font-weight:700}
+  .m-levels{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.m-level-chip{padding:8px 3px;border:1px solid #233b49;border-radius:10px;text-align:center;font-size:9px;color:#bdcbd1}.m-level-chip b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;margin-bottom:4px;font-size:12px;color:#07131d}.m-level-chip.l0 b{background:#64e88f}.m-level-chip.l1 b{background:#ffd34e}.m-level-chip.l2 b{background:#ff9c3c}.m-level-chip.l3 b{background:#ff4d4d;color:#fff}
+  .m-two{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.m-source-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:10px}.m-source-row b{font-size:10px}.m-ok{color:#64e88f}.m-wait{color:#ffd55b}
+  .m-alert-btn{width:100%;border:0;background:linear-gradient(#f04444,#d72222);color:#fff;border-radius:13px;padding:12px 8px;font-size:13px;font-weight:950;box-shadow:0 9px 26px rgba(224,38,38,.20)}.m-alert-btn.active{background:linear-gradient(#35cf73,#15984c)}
+  .m-toggle-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid #20343f;font-size:9px;color:#b7c8cf}
+  .m-station-scroll{display:flex;gap:7px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:3px}.m-station-scroll::-webkit-scrollbar{display:none}.m-stn{min-width:112px;scroll-snap-align:start;padding:10px;border:1px solid #263f4e;border-radius:13px;background:#0a1823}.m-stn b{font-size:11px}.m-stn small{display:block;color:#a9bbc2;font-size:8px;margin-top:3px}.m-bars{color:#59df82;font-size:13px}
+  .m-map{height:145px;position:relative;overflow:hidden;background:linear-gradient(145deg,#0a1722,#09141d)}.m-map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#173440 1px,transparent 1px),linear-gradient(90deg,#173440 1px,transparent 1px);background-size:24px 24px;opacity:.4}.m-radar{position:absolute;left:47%;top:53%;width:88px;height:88px;border:1px solid rgba(78,232,135,.45);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 24px rgba(78,232,135,.05),0 0 0 48px rgba(78,232,135,.025)}.m-pin{position:absolute;left:47%;top:53%;transform:translate(-50%,-50%);font-size:27px}.m-map-copy{position:absolute;right:13px;top:37px;width:43%;z-index:2}.m-map-copy b{color:#68e990}.m-map-copy p{font-size:10px;color:#bacbd2;line-height:1.4}
+  .m-install{margin-top:10px;padding:14px;border-color:#264b62}.m-install .row{display:flex;align-items:center;gap:10px}.m-install .appico{width:47px;height:47px;border-radius:14px;background:#0c2b24;border:1px solid #36bd70;display:grid;place-items:center;font-size:25px}.m-install b{font-size:13px}.m-install small{display:block;color:#a9bfc8;font-size:9px;margin-top:3px}.m-install button{margin-left:auto;border:0;background:#5be58e;color:#052516;border-radius:11px;padding:9px 10px;font-size:10px;font-weight:900}
+  .m-bottom{position:fixed;bottom:0;left:0;right:0;z-index:60;height:72px;padding-bottom:env(safe-area-inset-bottom);background:rgba(6,18,27,.96);border-top:1px solid #1d3543;display:grid;grid-template-columns:repeat(4,1fr);backdrop-filter:blur(18px)}.m-bottom button{border:0;background:transparent;color:#92a8b1;font-size:9px}.m-bottom button b{display:block;font-size:19px;margin-bottom:3px}.m-bottom button.active{color:#65e990}
+  .alert-overlay{padding:14px}.alert-box{border-radius:20px;padding:21px 17px}.alert-title{font-size:34px}.alert-message{font-size:13px}.alert-action{font-size:18px}
+}
+
 </style>
 </head>
 <body>
+<div class="mobile-pwa" id="mobilePwa">
+  <header class="m-head">
+    <div class="m-logo">〽</div>
+    <div class="m-brand"><b>AUREO SISMO PERÚ</b><small>Monitoreo sísmico en tiempo real</small></div>
+    <button class="m-bell" id="mAlertBtn">🔔<br><span>Alertas OFF</span></button>
+  </header>
+
+  <main class="m-main">
+    <section class="m-card m-status">
+      <div class="m-shield"><span id="mShield">✓</span></div>
+      <div>
+        <div class="m-kicker">Red sísmica <span style="float:right;color:#66e894">● EN VIVO</span></div>
+        <div class="m-status-title" id="mNetwork">ACTIVA</div>
+        <div class="m-status-sub" id="mNetworkSub">Monitoreo normal</div>
+        <div class="m-status-msg" id="mNetworkMsg">La red está operativa y sin eventos relevantes.</div>
+      </div>
+    </section>
+
+    <div class="m-mini-grid">
+      <div class="m-card m-mini"><div class="ico">📡</div><b id="mStations">0</b><small>estaciones</small></div>
+      <div class="m-card m-mini"><div class="ico">〽️</div><b id="mPackets">0</b><small>lecturas sesión</small></div>
+      <div class="m-card m-mini"><div class="ico">🕒</div><b id="mLast">—</b><small>última señal</small></div>
+    </div>
+
+    <section class="m-card m-danger" id="mDangerCard">
+      <div class="m-danger-icon" id="mDangerIcon">✓</div>
+      <div><h2>¿Hay peligro ahora?</h2><div class="answer" id="mDangerAnswer">NO</div><p id="mDangerText">No hay indicios de un evento relevante. Seguimos monitoreando.</p></div>
+      <div class="m-level"><small>NIVEL</small><b id="mLevel">0</b><small id="mLevelText">Normal</small></div>
+    </section>
+
+    <section class="m-card m-section">
+      <div class="m-section-title">Niveles de alerta <span>fácil de entender</span></div>
+      <div class="m-levels">
+        <div class="m-level-chip l0"><b>0</b><br>Normal</div>
+        <div class="m-level-chip l1"><b>1</b><br>Prepárate</div>
+        <div class="m-level-chip l2"><b>2</b><br>Protégete</div>
+        <div class="m-level-chip l3"><b>3</b><br>Oficial</div>
+      </div>
+    </section>
+
+    <div class="m-two">
+      <section class="m-card m-section">
+        <div class="m-section-title">Fuentes</div>
+        <div class="m-source-row"><b>EMSC</b><span id="mEmsc" class="m-wait">—</span></div>
+        <div class="m-source-row"><b>USGS</b><span id="mUsgs" class="m-wait">—</span></div>
+        <div class="m-source-row"><b>IGP Perú</b><span id="mIgp" class="m-wait">espera</span></div>
+      </section>
+      <section class="m-card m-section">
+        <div class="m-section-title">Avisos</div>
+        <button class="m-alert-btn" id="mEnableAlerts">🔔 ACTIVAR ALERTAS</button>
+        <div class="m-toggle-row"><span>Prealerta experimental</span><div class="toggle" id="mPrealertToggle"></div></div>
+      </section>
+    </div>
+
+    <section class="m-card m-section">
+      <div class="m-section-title">Estaciones en línea <span id="mStationsMore">en vivo</span></div>
+      <div class="m-station-scroll" id="mStationScroll"></div>
+    </section>
+
+    <section class="m-card m-section" style="padding-bottom:0;overflow:hidden">
+      <div class="m-section-title">Zona: Huancayo <span>objetivo</span></div>
+      <div class="m-map">
+        <div class="m-radar"></div><div class="m-pin">📍</div>
+        <div class="m-map-copy"><b id="mZoneState">Sin eventos</b><p id="mZoneText">No se detectan eventos relevantes en la zona.</p></div>
+      </div>
+    </section>
+
+    <section class="m-card m-install" id="mInstallCard">
+      <div class="row">
+        <div class="appico">〽</div>
+        <div><b>Instalar AUREO SISMO PERÚ</b><small>Queda como app en tu pantalla de inicio.</small></div>
+        <button id="mInstallButton">INSTALAR</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="m-bottom">
+    <button class="active" data-mtarget="top"><b>〽</b>Resumen</button>
+    <button data-mtarget="zone"><b>⌖</b>Zona</button>
+    <button id="mBottomAlert"><b>🔔</b>Alertas</button>
+    <button id="mBottomSettings"><b>⚙</b>Ajustes</button>
+  </nav>
+</div>
+
+<div class="install-toast" id="installToast">
+  <div>📲</div><div><strong>Instalar AUREO SISMO PERÚ</strong><small>Acceso directo y notificaciones push.</small></div><button id="installToastButton">Instalar</button>
+</div>
+
 <div class="app">
   <aside class="sidebar">
     <div class="brand-mini">
@@ -475,6 +609,9 @@ let experimentalPrealerts=localStorage.getItem("sismo_prealerts_enabled")==="1";
 let mutedAlerts=false;
 let lastAlertKey="";
 let lastAlertLevel=0;
+let deferredInstallPrompt=null;
+let pushSubscription=null;
+let pushConfigured=false;
 
 const fallbackStations=[
   ["CX.PB18",-17.58954,-69.48],["CX.PB16",-18.33510,-69.50767],["CX.PB12",-18.61406,-70.32809],
@@ -711,6 +848,241 @@ function renderSources(t){
   ];
   box.innerHTML=rows.map(r=>`<div class="external-row"><div class="source-logo">${r.name}</div><div><b>${r.name}</b><small>${r.sub}</small></div><div class="source-state"><span class="status-dot ${r.state[1]}"></span> ${r.state[0]}<small>${r.at?age(r.at):"—"}</small></div></div>`).join("");
 }
+function urlBase64ToUint8Array(base64String){
+  const padding="=".repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(base64),out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+  return out;
+}
+
+function isStandalone(){
+  return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+async function registerPwa(){
+  if(!("serviceWorker" in navigator)) return null;
+  try{
+    const reg=await navigator.serviceWorker.register("/sw.js",{scope:"/"});
+    await navigator.serviceWorker.ready;
+    return reg;
+  }catch(e){
+    console.warn("[PWA] service worker:",e);
+    return null;
+  }
+}
+
+async function getPushConfig(){
+  try{
+    const r=await fetch("/api/push/public-key",{cache:"no-store"});
+    const x=await r.json();
+    pushConfigured=Boolean(x.configured && x.publicKey);
+    return x;
+  }catch{return {configured:false}}
+}
+
+async function syncPushSubscription(){
+  if(Notification.permission!=="granted") return null;
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  const cfg=await getPushConfig();
+  if(!cfg.configured) return null;
+
+  if(!sub){
+    sub=await reg.pushManager.subscribe({
+      userVisibleOnly:true,
+      applicationServerKey:urlBase64ToUint8Array(cfg.publicKey)
+    });
+  }
+  pushSubscription=sub;
+  await fetch("/api/push/subscribe",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({
+      subscription:sub.toJSON(),
+      prefs:{experimentalPrealerts}
+    })
+  });
+  alertsEnabled=true;
+  localStorage.setItem("sismo_alerts_enabled","1");
+  updateAlertButtons();
+  return sub;
+}
+
+async function enableBackgroundAlerts(){
+  primeAudio();
+  const reg=await registerPwa();
+  if(!reg){
+    alert("Este navegador no admite las funciones necesarias para alertas en segundo plano.");
+    return;
+  }
+
+  if(isIOS() && !isStandalone()){
+    alert("En iPhone/iPad: primero abre esta web en Safari → Compartir → Añadir a pantalla de inicio. Luego abre AUREO SISMO PERÚ desde el icono y activa las alertas.");
+    return;
+  }
+
+  const cfg=await getPushConfig();
+  if(!cfg.configured){
+    alert("Falta configurar las claves de notificaciones en Railway. Usa el archivo VAPID_RAILWAY_VARIABLES.txt que viene con V2.7.");
+    return;
+  }
+
+  const permission=await Notification.requestPermission();
+  if(permission!=="granted"){
+    alert("Necesito permiso de notificaciones para avisarte cuando la app esté cerrada.");
+    return;
+  }
+
+  try{
+    await syncPushSubscription();
+    alert("✅ Alertas activadas. AUREO SISMO PERÚ podrá enviarte notificaciones push aunque cierres la app.");
+  }catch(e){
+    console.error(e);
+    alert("No se pudo activar Push: "+(e?.message||e));
+  }
+}
+
+async function updatePushPreference(){
+  if(!pushSubscription && Notification.permission==="granted"){
+    try{pushSubscription=await (await navigator.serviceWorker.ready).pushManager.getSubscription()}catch{}
+  }
+  if(!pushSubscription) return;
+  try{
+    await fetch("/api/push/subscribe",{
+      method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({
+        subscription:pushSubscription.toJSON(),
+        prefs:{experimentalPrealerts}
+      })
+    });
+  }catch{}
+}
+
+async function testBackgroundPush(level=1){
+  if(!pushSubscription){
+    await enableBackgroundAlerts();
+    if(!pushSubscription) return;
+  }
+  const r=await fetch("/api/push/test",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({subscription:pushSubscription.toJSON(),level})
+  });
+  const x=await r.json();
+  if(!x.ok) alert("Prueba push falló: "+(x.error||"error"));
+}
+
+function speakAlert(level){
+  if(!alertsEnabled || mutedAlerts || document.visibilityState!=="visible" || !("speechSynthesis" in window))return;
+  try{
+    speechSynthesis.cancel();
+    const text=level>=3
+      ?"AUREO SISMO PERÚ. Sismo confirmado por fuente oficial. Protégete ahora. Agáchate, cúbrete y sujétate."
+      : level>=2
+        ?"AUREO SISMO PERÚ. Sismo corroborado. Protégete ahora. Agáchate, cúbrete y sujétate."
+        :"AUREO SISMO PERÚ. Posible sismo. Prepárate para protegerte.";
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="es-PE";u.rate=.96;u.pitch=.92;u.volume=1;
+    speechSynthesis.speak(u);
+  }catch{}
+}
+
+function updateInstallUi(){
+  const installed=isStandalone();
+  const card=$("#mInstallCard"),btn=$("#mInstallButton");
+  if(card) card.style.display=installed?"none":"block";
+  if(btn) btn.textContent=isIOS()&&!deferredInstallPrompt?"CÓMO INSTALAR":"INSTALAR";
+}
+
+async function triggerInstall(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    try{await deferredInstallPrompt.userChoice}catch{}
+    deferredInstallPrompt=null;
+    updateInstallUi();
+    return;
+  }
+  if(isIOS()){
+    alert("En iPhone/iPad: abre en Safari → toca Compartir → «Añadir a pantalla de inicio» → abre AUREO SISMO PERÚ desde el icono.");
+  }else{
+    alert("Abre el menú de Chrome y elige «Instalar app» o «Añadir a pantalla principal».");
+  }
+}
+
+function mobileAge(iso){
+  if(!iso)return "—";
+  const s=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
+  if(s<60)return `${Math.round(s)} s`;
+  return `${Math.round(s/60)} min`;
+}
+
+function renderMobile(t){
+  if(!$("#mobilePwa"))return;
+  const w=t.waveform?.status||{},gs=w.servers?.GEOFON||{},d=t.detection||{},src=t.sources||{};
+  const h=waveformHealth(t),a=t.alert||{level:0};
+  const lvl=Number(a.level||0);
+  const stations=n(w.stations||gs.stations),packets=n(w.packets||gs.packets);
+
+  $("#mNetwork").textContent=h.key==="live"?"ACTIVA":h.label.toUpperCase();
+  $("#mNetwork").style.color=h.key==="live"?"#61e68f":"#ffd35b";
+  $("#mNetworkSub").textContent=lvl>0?(a.title||"Revisión"):"Monitoreo normal";
+  $("#mNetworkMsg").textContent=lvl>0?(a.message||"Analizando señal."):"La red está operativa y sin eventos relevantes.";
+  $("#mStations").textContent=stations;
+  $("#mPackets").textContent=packets;
+  $("#mLast").textContent=mobileAge(w.last_waveform_at||gs.last_waveform_at);
+
+  const answer=lvl>=2?"SÍ":lvl===1?"POSIBLE":"NO";
+  const colors=lvl>=2?"#ff5a58":lvl===1?"#ffd34f":"#64e991";
+  $("#mDangerAnswer").textContent=answer;$("#mDangerAnswer").style.color=colors;
+  $("#mDangerIcon").textContent=lvl>=2?"!":lvl===1?"?":"✓";$("#mDangerIcon").style.color=colors;$("#mDangerIcon").style.borderColor=colors;
+  $("#mDangerText").textContent=lvl>0?(a.action?`${a.title}. ${a.action}`:a.title):"No hay indicios de un evento relevante. Seguimos monitoreando.";
+  $("#mLevel").textContent=lvl;
+  $("#mLevel").style.color=colors;
+  $("#mLevelText").textContent=lvl===0?"Normal":lvl===1?"Prepárate":lvl===2?"Protégete":"Oficial";
+
+  $("#mEmsc").textContent=src.EMSC?.state==="connected"?"OK":"—";$("#mEmsc").className=src.EMSC?.state==="connected"?"m-ok":"m-wait";
+  $("#mUsgs").textContent=src.USGS?.state==="ok"?"OK":"—";$("#mUsgs").className=src.USGS?.state==="ok"?"m-ok":"m-wait";
+  const igp=(t.events?.latest?.sources||[]).includes("IGP");
+  $("#mIgp").textContent=igp?"OK":"espera";$("#mIgp").className=igp?"m-ok":"m-wait";
+
+  $("#mZoneState").textContent=lvl>=2?"Evento relevante":lvl===1?"Señal en evaluación":"Sin eventos";
+  $("#mZoneState").style.color=colors;
+  $("#mZoneText").textContent=lvl>0?(a.message||"Analizando señal."):"No se detectan eventos relevantes en la zona.";
+
+  const acts=w.station_activity||{};
+  let rows=Object.entries(acts).map(([id,x])=>({id,...x}));
+  if(!rows.length){
+    rows=(w.stations||gs.stations)?[
+      {id:"CX.PB18",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
+      {id:"CX.PB16",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
+      {id:"CX.PB12",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
+      {id:"CX.MNMCX",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0},
+      {id:"CX.PSGCX",channel:"HH?",last_waveform_at:w.last_waveform_at,packets:0}
+    ]:[];
+  }
+  rows.sort((x,y)=>n(y.packets)-n(x.packets));
+  $("#mStationScroll").innerHTML=rows.slice(0,8).map(s=>`<div class="m-stn"><div class="m-bars">▮▮▮▮</div><b>${s.id||s.station_id}</b><small>${s.channel||"HH?"}</small><small>última: ${mobileAge(s.last_waveform_at)}</small></div>`).join("") || `<div class="m-stn"><b>Conectando…</b><small>esperando estaciones</small></div>`;
+  $("#mStationsMore").textContent=`${stations} conectadas`;
+
+  updateAlertButtons();
+  updateInstallUi();
+}
+
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  updateInstallUi();
+  if(!isStandalone())$("#installToast")?.classList.add("show");
+});
+window.addEventListener("appinstalled",()=>{
+  deferredInstallPrompt=null;
+  $("#installToast")?.classList.remove("show");
+  updateInstallUi();
+});
+
 function alertSeverity(a){return n(a?.level)}
 function alertKey(a){return `${a?.code||"NORMAL"}:${a?.eventId||""}`}
 
@@ -742,19 +1114,17 @@ function playAlertSound(level){
   }
 }
 async function enableAlerts(){
-  alertsEnabled=true;mutedAlerts=false;
-  localStorage.setItem("sismo_alerts_enabled","1");
-  primeAudio();
-  if("Notification" in window && Notification.permission==="default"){
-    try{await Notification.requestPermission()}catch{}
-  }
-  updateAlertButtons();
+  await enableBackgroundAlerts();
 }
 function updateAlertButtons(){
   const label=alertsEnabled?"🔔 Alertas activas":"🔔 Activar alertas";
   $("#alertsButton").textContent=label;
   $("#enableAlertsSettings").textContent=alertsEnabled?"Activadas":"Activar";
   $("#prealertToggle").classList.toggle("on",experimentalPrealerts);
+  const mb=$("#mEnableAlerts"),mh=$("#mAlertBtn"),mt=$("#mPrealertToggle");
+  if(mb){mb.textContent=alertsEnabled?"✅ ALERTAS ACTIVAS":"🔔 ACTIVAR ALERTAS";mb.classList.toggle("active",alertsEnabled)}
+  if(mh){mh.classList.toggle("on",alertsEnabled);mh.querySelector("span").textContent=alertsEnabled?"Alertas ON":"Alertas OFF"}
+  if(mt)mt.classList.toggle("on",experimentalPrealerts);
 }
 function showSystemNotification(a){
   if(!alertsEnabled||!("Notification" in window)||Notification.permission!=="granted")return;
@@ -791,6 +1161,7 @@ function presentAlert(a){
   $("#alertOverlay").classList.add("show");
 
   playAlertSound(lvl);
+  speakAlert(lvl);
   showSystemNotification(a);
 }
 
@@ -826,7 +1197,7 @@ function render(t){
   $("#statPackets").textContent=fmt(w.packets||gs.packets);$("#statPicks").textContent=fmt(d.totalPicks);$("#statStations").textContent=fmt(w.stations||gs.stations);$("#statUptime").textContent=uptime(w.started_at);
   $("#sidebarSafe").textContent=networkOk?"Monitoreo activo":health.key==="starting"?"Iniciando monitoreo":"Conexión en revisión";
 
-  renderStations(t);renderMap(t);renderActivity(t);renderSources(t);
+  renderStations(t);renderMap(t);renderActivity(t);renderSources(t);renderMobile(t);
   packetHistory.push(n(w.packets||gs.packets));if(packetHistory.length>100)packetHistory.shift();
 }
 async function refresh(){
@@ -854,10 +1225,34 @@ $("#prealertToggle").onclick=()=>{
   experimentalPrealerts=!experimentalPrealerts;
   localStorage.setItem("sismo_prealerts_enabled",experimentalPrealerts?"1":"0");
   updateAlertButtons();
+  updatePushPreference();
 };
 $("#alertAcknowledge").onclick=()=>$("#alertOverlay").classList.remove("show");
 $("#alertMute").onclick=()=>{mutedAlerts=true;$("#alertOverlay").classList.remove("show")};
 updateAlertButtons();
+
+$("#mEnableAlerts")?.addEventListener("click",enableBackgroundAlerts);
+$("#mAlertBtn")?.addEventListener("click",enableBackgroundAlerts);
+$("#mBottomAlert")?.addEventListener("click",enableBackgroundAlerts);
+$("#mBottomSettings")?.addEventListener("click",openSettings);
+$("#mPrealertToggle")?.addEventListener("click",()=>{
+  experimentalPrealerts=!experimentalPrealerts;
+  localStorage.setItem("sismo_prealerts_enabled",experimentalPrealerts?"1":"0");
+  updateAlertButtons();
+  updatePushPreference();
+});
+$("#mInstallButton")?.addEventListener("click",triggerInstall);
+$("#installToastButton")?.addEventListener("click",async()=>{await triggerInstall();$("#installToast")?.classList.remove("show")});
+document.querySelectorAll("[data-mtarget]").forEach(b=>b.addEventListener("click",()=>{
+  if(b.dataset.mtarget==="zone")document.querySelector(".m-map")?.scrollIntoView({behavior:"smooth",block:"center"});
+  else window.scrollTo({top:0,behavior:"smooth"});
+}));
+registerPwa().then(async()=>{
+  updateInstallUi();
+  if(Notification.permission==="granted"){
+    try{await syncPushSubscription()}catch(e){console.warn("[PUSH] resync",e)}
+  }
+});
 
 function drawHeaderWave(){
   const c=$("#headerWave"),dpr=window.devicePixelRatio||1,rect=c.getBoundingClientRect();if(rect.width<10)return;
