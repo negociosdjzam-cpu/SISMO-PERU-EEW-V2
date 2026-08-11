@@ -11,7 +11,8 @@ from health import serve
 
 S=load_settings()
 STATUS={
-    'version':'2.3-telemetry-autoheal-static-fallback',
+    'version':'2.4-ui-telemetry-autoheal-static-fallback',
+    'station_activity':{},
     'started_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),
     'picker_requested':S.picker_mode,
     'servers':{},
@@ -66,11 +67,30 @@ class Client(EasySeedLinkClient):
         meta=self.metas.get(key)
         if not meta:
             return
-        STATUS['last_waveform_at']=str(trace.stats.endtime)
+        endtime=str(trace.stats.endtime)
+        STATUS['last_waveform_at']=endtime
         STATUS['packets']=STATUS.get('packets',0)+1
         s=STATUS['servers'].setdefault(self.source_name,{})
-        s['last_waveform_at']=str(trace.stats.endtime)
+        s['last_waveform_at']=endtime
         s['packets']=s.get('packets',0)+1
+
+        station_id=f"{meta.network}.{meta.station}"
+        channel=str(getattr(trace.stats,'channel','') or meta.selector or '')
+        station_activity=STATUS.setdefault('station_activity',{})
+        a=station_activity.setdefault(station_id,{
+            'station_id':station_id,
+            'source':self.source_name,
+            'network':meta.network,
+            'station':meta.station,
+            'lat':meta.lat,
+            'lon':meta.lon,
+            'channel':channel,
+            'packets':0,
+            'last_waveform_at':None
+        })
+        a['packets']=a.get('packets',0)+1
+        a['last_waveform_at']=endtime
+        a['channel']=channel
         try:
             picker.feed(trace,meta)
         except Exception as e:
@@ -228,7 +248,7 @@ for srv in load_servers():
     ).start()
 
 print(
-    f"SISMO PERU WAVEFORM GATEWAY V2.3 TELEMETRY + AUTOHEAL listo. "
+    f"SISMO PERU WAVEFORM GATEWAY V2.4 UI TELEMETRY + AUTOHEAL listo. "
     f"health :{S.gateway_port}; picker={STATUS['picker_active']}; "
     f"static_fallback={S.static_fallback}",
     flush=True
