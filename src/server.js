@@ -7,8 +7,8 @@ import { UsgsSource } from "./sources/usgs.js";
 
 const app = express();
 app.disable("x-powered-by");
-app.use(express.json({limit:"256kb"}));
-app.use(express.static("public", {maxAge:"5m"}));
+app.use(express.json({limit:"512kb"}));
+app.use(express.static("public", {maxAge:"30s"}));
 
 const PORT = Number(process.env.PORT || 3000);
 const bounds = {
@@ -26,6 +26,12 @@ try {
 }
 
 const status = {};
+let waveformTelemetry = {
+  receivedAt:null,
+  sentAt:null,
+  status:{state:"WAITING_FOR_WAVEFORM_GATEWAY"}
+};
+
 const fusion = new FusionEngine({
   clusterTimeSec:Number(process.env.CLUSTER_TIME_SEC || 120),
   clusterDistanceKm:Number(process.env.CLUSTER_DISTANCE_KM || 120),
@@ -33,8 +39,8 @@ const fusion = new FusionEngine({
 });
 const sensorLab = new SensorLab({
   minStations:Number(process.env.SENSOR_MIN_STATIONS || 4),
-  windowSec:Number(process.env.SENSOR_WINDOW_SEC || 15),
-  maxRmsSec:Number(process.env.SENSOR_MAX_RMS_SEC || 1.5),
+  windowSec:Number(process.env.SENSOR_WINDOW_SEC || 18),
+  maxRmsSec:Number(process.env.SENSOR_MAX_RMS_SEC || 1.2),
   targets
 });
 
@@ -48,6 +54,7 @@ function publish(type, payload) {
 }
 
 fusion.onEvent(ev => publish("fusion", ev));
+sensorLab.onTrigger(x => publish("sensor_trigger", x));
 sensorLab.onCandidate(c => {
   sensorCandidates.unshift(c);
   sensorCandidates.splice(20);
@@ -72,13 +79,36 @@ const usgs = new UsgsSource({
 emsc.start();
 usgs.start();
 
+function telemetryPayload() {
+  return {
+    ok:true,
+    service:"SISMO PERU EEW TELEMETRY",
+    version:"2.3.0",
+    now:new Date().toISOString(),
+    warning:"Telemetría experimental. Un PICK no equivale a terremoto ni a alerta oficial.",
+    targets,
+    sources:status,
+    waveform:waveformTelemetry,
+    detection:sensorLab.getTelemetry(),
+    candidates:{
+      count:sensorCandidates.length,
+      latest:sensorCandidates[0] || null
+    },
+    events:{
+      count:fusion.list(500).length,
+      latest:fusion.latest()
+    }
+  };
+}
+
 app.get("/health", (_req,res) => {
   res.json({
     ok:true,
     service:"SISMO PERU FUSION ENGINE",
-    version:"2.0.0",
+    version:"2.3.0",
     now:new Date().toISOString(),
-    sources:status
+    sources:status,
+    waveformTelemetryAt:waveformTelemetry.receivedAt
   });
 });
 
@@ -89,11 +119,14 @@ app.get("/api/eew/status", (_req,res) => {
     bounds,
     targets,
     sources:status,
+    waveform:waveformTelemetry,
+    detection:sensorLab.getTelemetry(),
     eventCount:fusion.list(500).length,
     sensorCandidateCount:sensorCandidates.length
   });
 });
 
+app.get("/api/eew/telemetry", (_req,res) => res.json(telemetryPayload()));
 app.get("/api/eew/latest", (_req,res) => res.json({ok:true,event:fusion.latest()}));
 app.get("/api/eew/events", (req,res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
@@ -109,7 +142,7 @@ app.get("/api/eew/stream", (req,res) => {
     "X-Accel-Buffering":"no"
   });
   res.flushHeaders?.();
-  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,now:new Date().toISOString()})}\n\n`);
+  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,version:"2.3.0",now:new Date().toISOString()})}\n\n`);
   sseClients.add(res);
   const keep = setInterval(() => {
     try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
@@ -125,7 +158,6 @@ function requireToken(req,res,next) {
   next();
 }
 
-// Tu backend actual puede POSTear aquí cada reporte IGP normalizado.
 app.post("/api/eew/ingest/igp", requireToken, (req,res) => {
   const b = req.body || {};
   const ev = {
@@ -148,22 +180,39 @@ app.post("/api/eew/ingest/igp", requireToken, (req,res) => {
   res.json({ok:true,event:fused});
 });
 
-// Gateway de sensores propios / Raspberry Shake local.
-// Recibe PICKS P ya detectados; no recibe una supuesta "predicción".
 app.post("/api/eew/ingest/sensor-trigger", requireToken, (req,res) => {
   const b=req.body || {};
   const c=sensorLab.ingest({
     stationId:b.stationId,
+    network:b.network,
+    channel:b.channel,
     lat:Number(b.lat),
     lon:Number(b.lon),
     detectedAt:b.detectedAt || new Date().toISOString(),
     phase:b.phase || "P",
-    quality:b.quality
+    quality:b.quality,
+    picker:b.picker,
+    snr:b.snr,
+    triggerPeak:b.triggerPeak
   });
-  res.json({ok:true,candidate:c || null});
+  res.json({
+    ok:true,
+    candidate:c || null,
+    correlation:sensorLab.getTelemetry()
+  });
 });
 
-// Solo para laboratorios/control interno. NO se etiqueta como alerta oficial.
+app.post("/api/eew/ingest/waveform-telemetry", requireToken, (req,res) => {
+  const b=req.body || {};
+  waveformTelemetry = {
+    sentAt:b.sentAt || null,
+    receivedAt:new Date().toISOString(),
+    status:b.status || b
+  };
+  publish("waveform_telemetry", waveformTelemetry);
+  res.json({ok:true,receivedAt:waveformTelemetry.receivedAt});
+});
+
 app.get("/api/eew/public-signal", (_req,res) => {
   const enabled = String(process.env.ENABLE_EXPERIMENTAL_PUBLIC_SIGNAL || "false").toLowerCase() === "true";
   const ev = fusion.latest();
@@ -180,6 +229,6 @@ app.get("/api/eew/public-signal", (_req,res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[SISMO PERU EEW V2] escuchando en :${PORT}`);
-  console.log(`[SISMO PERU EEW V2] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
+  console.log(`[SISMO PERU EEW V2.3] escuchando en :${PORT}`);
+  console.log(`[SISMO PERU EEW V2.3] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
 });

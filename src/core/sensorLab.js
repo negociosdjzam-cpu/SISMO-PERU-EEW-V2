@@ -1,6 +1,6 @@
 import { haversineKm, theoreticalArrivals } from "./geo.js";
 
-const VP = 6.0; // km/s: approximation for experimental P-wave association only.
+const VP = 6.0; // km/s: experimental P-wave association only.
 
 function mean(a) { return a.reduce((s,x)=>s+x,0)/a.length; }
 function rms(a) { return Math.sqrt(mean(a.map(x=>x*x))); }
@@ -13,12 +13,19 @@ export class SensorLab {
     this.maxRmsSec = maxRmsSec;
     this.targets = targets;
     this.triggers = [];
+    this.history = [];
+    this.totalPicks = 0;
     this.lastCandidateKey = "";
+    this.lastCandidate = null;
+    this.lastAssociationAttempt = null;
     this.listeners = new Set();
+    this.triggerListeners = new Set();
   }
 
   onCandidate(fn) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  onTrigger(fn) { this.triggerListeners.add(fn); return () => this.triggerListeners.delete(fn); }
   emit(x) { for (const f of this.listeners) { try{f(x)}catch{} } }
+  emitTrigger(x) { for (const f of this.triggerListeners) { try{f(x)}catch{} } }
 
   ingest(t) {
     if (!t?.stationId || !Number.isFinite(Number(t.lat)) || !Number.isFinite(Number(t.lon))) return null;
@@ -29,15 +36,23 @@ export class SensorLab {
       stationId:String(t.stationId),
       network:String(t.network || ""),
       channel:String(t.channel || ""),
-      lat:Number(t.lat), lon:Number(t.lon),
+      lat:Number(t.lat),
+      lon:Number(t.lon),
       detectedAt:new Date(detectedMs).toISOString(),
+      receivedAt:new Date().toISOString(),
       phase:String(t.phase || "P").toUpperCase(),
       quality:Number.isFinite(Number(t.quality)) ? Number(t.quality) : null,
-      picker:String(t.picker || "unknown")
+      picker:String(t.picker || "unknown"),
+      snr:Number.isFinite(Number(t.snr)) ? Number(t.snr) : null,
+      triggerPeak:Number.isFinite(Number(t.triggerPeak)) ? Number(t.triggerPeak) : null
     };
 
+    this.totalPicks += 1;
+    this.history.push(trig);
+    if (this.history.length > 250) this.history.splice(0, this.history.length - 250);
+
     this.triggers.push(trig);
-    // Use newest observed pick, not server wall clock, so normal telemetry delay does not destroy association.
+    // Associate relative to newest observed pick so normal network delay does not destroy a cluster.
     const newest = Math.max(...this.triggers.map(x=>new Date(x.detectedAt).getTime()));
     this.triggers = this.triggers.filter(x => new Date(x.detectedAt).getTime() >= newest - this.windowMs);
 
@@ -48,18 +63,113 @@ export class SensorLab {
       if (!prev || new Date(x.detectedAt) > new Date(prev.detectedAt)) latestByStation.set(x.stationId,x);
     }
     const xs = [...latestByStation.values()];
-    if (xs.length < this.minStations) return null;
+
+    this.emitTrigger({
+      trigger:trig,
+      telemetry:this.getTelemetry(),
+      activeForAssociation:xs.length
+    });
+
+    if (xs.length < this.minStations) {
+      this.lastAssociationAttempt = {
+        at:new Date().toISOString(),
+        status:"WAITING_STATIONS",
+        stationCount:xs.length,
+        minStations:this.minStations,
+        stations:xs.map(x=>x.stationId)
+      };
+      return null;
+    }
 
     const candidate = this.locate(xs);
-    if (!candidate || candidate.residualRmsSec > this.maxRmsSec) return null;
+    if (!candidate) {
+      this.lastAssociationAttempt = {
+        at:new Date().toISOString(),
+        status:"LOCATOR_FAILED",
+        stationCount:xs.length
+      };
+      return null;
+    }
+
+    if (candidate.residualRmsSec > this.maxRmsSec) {
+      this.lastAssociationAttempt = {
+        at:new Date().toISOString(),
+        status:"REJECTED_RMS",
+        stationCount:xs.length,
+        residualRmsSec:candidate.residualRmsSec,
+        maxRmsSec:this.maxRmsSec,
+        stations:xs.map(x=>x.stationId)
+      };
+      return null;
+    }
 
     const key = `${Math.round(new Date(candidate.time).getTime()/2500)}:${candidate.stationCount}:${candidate.lat.toFixed(2)}:${candidate.lon.toFixed(2)}`;
+    this.lastAssociationAttempt = {
+      at:new Date().toISOString(),
+      status:"CANDIDATE_ACCEPTED",
+      stationCount:xs.length,
+      residualRmsSec:candidate.residualRmsSec,
+      maxRmsSec:this.maxRmsSec
+    };
+
     if (key === this.lastCandidateKey) return candidate;
     this.lastCandidateKey = key;
 
     candidate.arrivals = this.targets.map(t => theoreticalArrivals(candidate, t));
+    this.lastCandidate = candidate;
     this.emit(candidate);
     return candidate;
+  }
+
+  getTelemetry(nowMs=Date.now()) {
+    const cutoff = nowMs - this.windowMs;
+    const active = this.history.filter(x => {
+      const t=new Date(x.detectedAt).getTime();
+      return x.phase==="P" && Number.isFinite(t) && t >= cutoff && t <= nowMs + 5000;
+    });
+
+    const latestByStation = new Map();
+    for (const x of active) {
+      const prev=latestByStation.get(x.stationId);
+      if (!prev || new Date(x.detectedAt) > new Date(prev.detectedAt)) latestByStation.set(x.stationId,x);
+    }
+    const stationPicks=[...latestByStation.values()]
+      .sort((a,b)=>new Date(b.detectedAt)-new Date(a.detectedAt));
+    const count=stationPicks.length;
+
+    let state="QUIET";
+    if (count===1) state="PICK_OBSERVED";
+    else if (count>1 && count<this.minStations) state="CORRELATING";
+    else if (count>=this.minStations) state="EVALUATING";
+
+    const recentPicks=this.history.slice(-30).reverse().map(x=>({
+      ...x,
+      ageSec:Math.max(0,Math.round((nowMs-new Date(x.detectedAt).getTime())/100)/10)
+    }));
+
+    return {
+      state,
+      minStations:this.minStations,
+      windowSec:Math.round(this.windowMs/1000),
+      maxRmsSec:this.maxRmsSec,
+      activeStationCount:count,
+      stationsNeeded:Math.max(0,this.minStations-count),
+      progress:Math.min(1,Math.round((count/this.minStations)*100)/100),
+      activeStations:stationPicks.map(x=>({
+        stationId:x.stationId,
+        network:x.network,
+        channel:x.channel,
+        detectedAt:x.detectedAt,
+        snr:x.snr,
+        quality:x.quality,
+        picker:x.picker
+      })),
+      totalPicks:this.totalPicks,
+      lastPick:this.history.length ? this.history[this.history.length-1] : null,
+      recentPicks,
+      lastAssociationAttempt:this.lastAssociationAttempt,
+      lastCandidate:this.lastCandidate
+    };
   }
 
   scoreLocation(xs, lat, lon, depthKm) {
@@ -91,7 +201,6 @@ export class SensorLab {
   }
 
   locate(xs) {
-    // 3-stage coarse-to-fine search. This is still a lab locator, not SeisComP/NonLinLoc.
     let best=this.grid(xs,null,5.0,0.5,[5,15,30,60,100,160]);
     if(!best) return null;
     best=this.grid(xs,best,0.75,0.1,[Math.max(3,best.depthKm-30),best.depthKm,Math.min(250,best.depthKm+30)]);
@@ -115,7 +224,10 @@ export class SensorLab {
       depthKm:Math.round(best.depthKm*10)/10,
       magnitude:null,
       stationCount:xs.length,
-      stations:xs.map(x=>({id:x.stationId,network:x.network,channel:x.channel,picker:x.picker,quality:x.quality})),
+      stations:xs.map(x=>({
+        id:x.stationId,network:x.network,channel:x.channel,picker:x.picker,
+        quality:x.quality,snr:x.snr,detectedAt:x.detectedAt
+      })),
       avgPickQuality:Math.round(avgQuality*100)/100,
       confidence:Math.round(confidence*100)/100,
       residualRmsSec:Math.round(best.residualRmsSec*1000)/1000,

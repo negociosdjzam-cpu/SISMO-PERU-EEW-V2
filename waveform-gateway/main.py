@@ -11,7 +11,7 @@ from health import serve
 
 S=load_settings()
 STATUS={
-    'version':'2.2-autoheal-static-fallback',
+    'version':'2.3-telemetry-autoheal-static-fallback',
     'started_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),
     'picker_requested':S.picker_mode,
     'servers':{},
@@ -27,6 +27,7 @@ if not S.ingest_token:
     sys.exit(2)
 
 fusion=FusionClient(S.fusion_url,S.ingest_token,STATUS)
+fusion.start_telemetry(float(os.getenv('TELEMETRY_INTERVAL_SEC','2')))
 
 def forward_pick(p):
     print('[PICK]',json.dumps(p,ensure_ascii=False),flush=True)
@@ -227,7 +228,7 @@ for srv in load_servers():
     ).start()
 
 print(
-    f"SISMO PERU WAVEFORM GATEWAY V2.2 AUTOHEAL listo. "
+    f"SISMO PERU WAVEFORM GATEWAY V2.3 TELEMETRY + AUTOHEAL listo. "
     f"health :{S.gateway_port}; picker={STATUS['picker_active']}; "
     f"static_fallback={S.static_fallback}",
     flush=True
