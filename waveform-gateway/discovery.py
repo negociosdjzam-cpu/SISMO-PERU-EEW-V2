@@ -102,7 +102,7 @@ def _rows_to_streams(source,rows,max_stations):
     return candidates
 
 
-def tcp_probe_seedlink(endpoint,timeout=6.0):
+def tcp_probe_seedlink(endpoint,timeout=20.0):
     host,sep,port=endpoint.rpartition(':')
     if not sep: host,port=endpoint,'18000'
     port=int(port)
@@ -164,3 +164,20 @@ def discover(server:dict,bounds,max_stations=80,session=None):
     sess=session or requests.Session()
     rows,_=_station_rows(station_url,bounds,sess,15)
     return _rows_to_streams(server['name'],rows,max_stations)
+
+
+def resolve_seedlink_only(server:dict, timeout=20.0):
+    """Resolve only the SeedLink TCP endpoint.
+
+    Used when FDSN station metadata is unavailable but we have a trusted
+    station bootstrap inventory. This lets waveform streaming continue even
+    during an HTTP metadata outage.
+    """
+    errors=[]
+    for endpoint in server.get('seedlink_candidates', []):
+        try:
+            tcp_probe_seedlink(endpoint, timeout=timeout)
+            return endpoint
+        except Exception as e:
+            errors.append(f"{endpoint}: {e}")
+    raise RuntimeError("sin SeedLink accesible para fallback; " + " | ".join(errors[-3:]))

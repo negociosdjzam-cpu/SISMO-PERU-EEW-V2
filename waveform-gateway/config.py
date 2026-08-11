@@ -21,6 +21,7 @@ class Settings:
     auto_discovery: bool
     discovery_expand_deg: tuple
     endpoint_probe_timeout_sec: float
+    static_fallback: bool
 
 
 def _bool_env(name, default=True):
@@ -31,7 +32,8 @@ def _bool_env(name, default=True):
 def _bounds():
     raw=os.getenv("SEEDLINK_BOUNDS","-19.5,0.5,-84.5,-68.0")
     vals=[float(x.strip()) for x in raw.split(",")]
-    if len(vals)!=4: raise ValueError("SEEDLINK_BOUNDS=minLat,maxLat,minLon,maxLon")
+    if len(vals)!=4:
+        raise ValueError("SEEDLINK_BOUNDS=minLat,maxLat,minLon,maxLon")
     return tuple(vals)
 
 
@@ -40,9 +42,11 @@ def _expand_steps():
     vals=[]
     for x in raw.split(','):
         x=x.strip()
-        if not x: continue
+        if not x:
+            continue
         v=max(0.0,float(x))
-        if v not in vals: vals.append(v)
+        if v not in vals:
+            vals.append(v)
     return tuple(vals or [0.0])
 
 
@@ -65,11 +69,12 @@ def load_settings():
         phasenet_threshold=float(os.getenv("PHASENET_P_THRESHOLD","0.35")),
         auto_discovery=_bool_env("AUTO_DISCOVERY", True),
         discovery_expand_deg=_expand_steps(),
-        endpoint_probe_timeout_sec=float(os.getenv("ENDPOINT_PROBE_TIMEOUT_SEC","6")),
+        # 20s: Railway -> remote FDSN can occasionally take more than 6s.
+        endpoint_probe_timeout_sec=float(os.getenv("ENDPOINT_PROBE_TIMEOUT_SEC","20")),
+        static_fallback=_bool_env("STATIC_STATION_FALLBACK", True),
     )
 
-# Candidate pools: canonical first, legacy aliases afterwards.
-# The resolver probes them at runtime and follows HTTP redirects.
+
 DEFAULT_SERVERS=[
   {
     "name":"EARTHSCOPE",
@@ -96,6 +101,37 @@ DEFAULT_SERVERS=[
 ]
 
 
+# Emergency bootstrap inventory.
+# Source: official GEOFON FDSN station inventory for network CX (IPOC).
+# These stations were listed as current (no EndTime) when V2.2 was prepared.
+# Selector HH? is present in the official channel list for all entries below.
+# This is ONLY used if live FDSN station discovery fails.
+STATIC_FALLBACKS = {
+    "GEOFON": [
+        {"network":"CX","station":"PB18","location":"","selector":"HH?",
+         "lat":-17.58954,"lon":-69.48},
+        {"network":"CX","station":"PB16","location":"","selector":"HH?",
+         "lat":-18.33510,"lon":-69.50767},
+        {"network":"CX","station":"PB12","location":"","selector":"HH?",
+         "lat":-18.61406,"lon":-70.32809},
+        {"network":"CX","station":"MNMCX","location":"","selector":"HH?",
+         "lat":-19.13108,"lon":-69.59553},
+        {"network":"CX","station":"PSGCX","location":"","selector":"HH?",
+         "lat":-19.59717,"lon":-70.12305},
+        {"network":"CX","station":"PB23","location":"","selector":"HH?",
+         "lat":-19.73957,"lon":-69.63808},
+        {"network":"CX","station":"PB08","location":"","selector":"HH?",
+         "lat":-20.14112,"lon":-69.15340},
+        {"network":"CX","station":"HMBCX","location":"","selector":"HH?",
+         "lat":-20.27822,"lon":-69.88791},
+        {"network":"CX","station":"PB01","location":"","selector":"HH?",
+         "lat":-21.04323,"lon":-69.48740},
+        {"network":"CX","station":"PB02","location":"","selector":"HH?",
+         "lat":-21.31973,"lon":-69.89603},
+    ]
+}
+
+
 def _normalize_server(x):
     x=dict(x)
     if 'seedlink_candidates' not in x:
@@ -106,18 +142,26 @@ def _normalize_server(x):
         x['station_candidates']=[s] if s else []
     x['seedlink_candidates']=[str(v).strip() for v in x['seedlink_candidates'] if str(v).strip()]
     x['station_candidates']=[str(v).strip() for v in x['station_candidates'] if str(v).strip()]
-    if not x.get('name'): raise ValueError('cada servidor necesita name')
+    if not x.get('name'):
+        raise ValueError('cada servidor necesita name')
     return x
 
 
 def load_servers():
     raw=os.getenv("SEEDLINK_SERVERS_JSON","").strip()
-    if not raw: return [_normalize_server(x) for x in DEFAULT_SERVERS]
+    if not raw:
+        return [_normalize_server(x) for x in DEFAULT_SERVERS]
     x=json.loads(raw)
-    if not isinstance(x,list): raise ValueError("SEEDLINK_SERVERS_JSON debe ser una lista")
+    if not isinstance(x,list):
+        raise ValueError("SEEDLINK_SERVERS_JSON debe ser una lista")
     return [_normalize_server(v) for v in x]
 
 
 def load_manual_selectors():
     raw=os.getenv("SEEDLINK_SELECTORS_JSON","").strip()
     return json.loads(raw) if raw else []
+
+
+def load_static_fallback(source):
+    # User-supplied manual list always remains separate and has priority later.
+    return [dict(x) for x in STATIC_FALLBACKS.get(source, [])]
