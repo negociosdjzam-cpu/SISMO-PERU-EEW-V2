@@ -1,0 +1,20 @@
+{
+  "name": "sismo-peru-fusion-engine",
+  "version": "2.0.0",
+  "private": true,
+  "description": "SISMO PERU EEW V2: Fusion multifuente + Waveform Gateway SeedLink + P-wave picker",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node test/smoke.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "ws": "^8.21.3"
+  }
+}

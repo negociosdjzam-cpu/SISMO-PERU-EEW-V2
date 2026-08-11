@@ -1,0 +1,44 @@
+SISMO PERÚ EEW V2 — RAILWAY DEPLOY READY
+
+IMPORTANTE:
+- NO subas el ZIP como un archivo dentro del repositorio.
+- DESCOMPRIME el ZIP y sube TODO EL CONTENIDO de esta carpeta a UN repositorio GitHub.
+- En Railway se crean DOS SERVICIOS usando ESE MISMO repositorio.
+
+SERVICIO 1: SISMO-FUSION
+Root Directory: /  (déjalo vacío / raíz)
+Dockerfile: Dockerfile (automático)
+Variables mínimas:
+  INGEST_TOKEN=<un secreto largo, igual en ambos servicios>
+  ENABLE_EXPERIMENTAL_PUBLIC_SIGNAL=false
+Opcionales:
+  TARGETS_JSON=[{"id":"huancayo","name":"Huancayo","lat":-12.0651,"lon":-75.2049}]
+Healthcheck: /health
+Generar dominio público.
+
+SERVICIO 2: SISMO-WAVEFORM
+Mismo repositorio GitHub.
+Root Directory: /waveform-gateway
+Dockerfile: Dockerfile (automático)
+Variables mínimas:
+  FUSION_URL=https://DOMINIO-DEL-SERVICIO-1.up.railway.app
+  INGEST_TOKEN=<EXACTAMENTE el mismo secreto>
+  PICKER_MODE=sta_lta
+Healthcheck: /health
+No necesita dominio público para funcionar, aunque puedes generar uno temporalmente para mirar /health.
+
+NO HACER TODAVÍA:
+- No usar Dockerfile.ai.
+- No poner PICKER_MODE=phasenet.
+- No cambiar ENABLE_EXPERIMENTAL_PUBLIC_SIGNAL a true.
+- No conectar todavía la señal experimental a notificaciones públicas.
+
+PRIMERAS PRUEBAS:
+1) Abrir https://DOMINIO-FUSION/health
+2) Abrir https://DOMINIO-FUSION/api/eew/status
+3) En SISMO-WAVEFORM > Deployments > View Logs, buscar "streaming ... estaciones".
+4) Si generaste dominio temporal del gateway: abrir /health y buscar picker_active=sta_lta, stations > 0 y luego last_waveform_at.
+
+PUERTOS:
+- NO crees una variable PORT. Railway la inyecta.
+- NO crees GATEWAY_PORT. El gateway usa PORT automáticamente.

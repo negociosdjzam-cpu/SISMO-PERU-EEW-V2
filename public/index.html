@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SISMO PERÚ · Fusion Engine</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color-scheme:dark}
+body{margin:0;background:#081018;color:#eef5ff}
+main{max-width:980px;margin:auto;padding:24px}
+.card{background:#101c27;border:1px solid #263746;border-radius:18px;padding:18px;margin:14px 0}
+.badge{display:inline-block;padding:5px 9px;border:1px solid #43576a;border-radius:999px;font-size:12px}
+h1{margin-bottom:4px}.muted{color:#9fb1c1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.k{font-size:12px;color:#9fb1c1}.v{font-size:20px;font-weight:800}
+pre{white-space:pre-wrap;overflow:auto;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">MOTOR EXPERIMENTAL</span>
+  <h1>SISMO PERÚ · Fusion Engine</h1>
+  <p class="muted">EMSC WebSocket + USGS + entrada IGP + laboratorio de sensores. No sustituye alertas oficiales.</p>
+  <div class="card grid">
+    <div><div class="k">EMSC</div><div id="emsc" class="v">—</div></div>
+    <div><div class="k">USGS</div><div id="usgs" class="v">—</div></div>
+    <div><div class="k">Eventos fusionados</div><div id="count" class="v">—</div></div>
+    <div><div class="k">Última clase</div><div id="klass" class="v">—</div></div>
+  </div>
+  <div class="card">
+    <h2>Último evento</h2>
+    <pre id="latest">Esperando…</pre>
+  </div>
+</main>
+<script>
+async function refresh(){
+  const s=await fetch('/api/eew/status').then(r=>r.json());
+  document.querySelector('#emsc').textContent=s.sources?.EMSC?.state||'—';
+  document.querySelector('#usgs').textContent=s.sources?.USGS?.state||'—';
+  document.querySelector('#count').textContent=s.eventCount;
+}
+refresh(); setInterval(refresh,5000);
+const es=new EventSource('/api/eew/stream');
+es.addEventListener('fusion',e=>{
+  const x=JSON.parse(e.data);
+  document.querySelector('#latest').textContent=JSON.stringify(x,null,2);
+  document.querySelector('#klass').textContent=x.classification||'—';
+  refresh();
+});
+</script>
+</body>
+</html>
