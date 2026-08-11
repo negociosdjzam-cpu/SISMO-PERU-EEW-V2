@@ -2,13 +2,18 @@ from __future__ import annotations
 import json, os, sys, threading, time, traceback
 from obspy.clients.seedlink.easyseedlink import EasySeedLinkClient
 from config import load_settings, load_servers, load_manual_selectors
-from discovery import discover, StationStream
+from discovery import resolve_provider, StationStream
 from fusion_client import FusionClient
 from sta_lta_picker import StaLtaPicker
 from health import serve
 
 S=load_settings()
-STATUS={'started_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'picker_requested':S.picker_mode,'servers':{},'stations':0,'picks_forwarded':0}
+STATUS={
+    'version':'2.1-autoheal',
+    'started_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),
+    'picker_requested':S.picker_mode,'servers':{},'stations':0,'picks_forwarded':0,
+    'auto_discovery':S.auto_discovery,'discovery_expand_deg':list(S.discovery_expand_deg)
+}
 if not S.ingest_token:
     print('FATAL: INGEST_TOKEN obligatorio',file=sys.stderr); sys.exit(2)
 
@@ -56,33 +61,68 @@ class Client(EasySeedLinkClient):
         STATUS['servers'].setdefault(self.source_name,{})['state']='terminated'
 
 
+def _manual_metas(name):
+    out=[]
+    for m in manual_by_source.get(name,[]):
+        out.append(StationStream(name,m['network'],m['station'],m.get('location',''),
+                                 m.get('selector','HH?'),float(m['lat']),float(m['lon'])))
+    return out
+
+
 def run_server(server):
     name=server['name']
+    retry=5
     while True:
         try:
-            metas=discover(server,S.bounds,S.max_stations_per_server)
-            # Explicit manual selectors may augment discovery.
-            for m in manual_by_source.get(name,[]):
-                metas.append(StationStream(name,m['network'],m['station'],m.get('location',''),m.get('selector','HH?'),float(m['lat']),float(m['lon'])))
-            uniq={ (m.network,m.station):m for m in metas }
+            STATUS['servers'][name]={'state':'resolving'}
+            if S.auto_discovery:
+                rp=resolve_provider(
+                    server,S.bounds,S.max_stations_per_server,
+                    S.discovery_expand_deg,S.endpoint_probe_timeout_sec
+                )
+                metas=list(rp.stations)+_manual_metas(name)
+                seedlink=rp.seedlink
+                final_station=rp.station_final_url
+                expand=rp.expand_deg
+                bounds_used=rp.bounds_used
+            else:
+                # AUTO_DISCOVERY=false still uses first configured endpoints.
+                tmp=dict(server)
+                tmp['station_candidates']=(server.get('station_candidates') or [])[:1]
+                tmp['seedlink_candidates']=(server.get('seedlink_candidates') or [])[:1]
+                rp=resolve_provider(tmp,S.bounds,S.max_stations_per_server,(0,),S.endpoint_probe_timeout_sec)
+                metas=list(rp.stations)+_manual_metas(name)
+                seedlink=rp.seedlink; final_station=rp.station_final_url; expand=0; bounds_used=S.bounds
+
+            uniq={(m.network,m.station):m for m in metas}
             metas=list(uniq.values())
-            STATUS['servers'][name]={'state':'discovered','stations':len(metas),'seedlink':server['seedlink']}
+            STATUS['servers'][name]={
+                'state':'discovered','stations':len(metas),'seedlink':seedlink,
+                'station_url':final_station,'expand_deg':expand,'bounds_used':list(bounds_used),
+                'last_resolved_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
+            }
             STATUS['stations']=sum(v.get('stations',0) for v in STATUS['servers'].values())
-            if not metas: raise RuntimeError('sin estaciones descubiertas dentro de bounds')
-            c=Client(server['seedlink'],name,metas)
-            for m in metas:
-                c.select_stream(m.network,m.station,m.selector)
+            if not metas: raise RuntimeError('sin estaciones descubiertas')
+
+            c=Client(seedlink,name,metas)
+            for m in metas: c.select_stream(m.network,m.station,m.selector)
             STATUS['servers'][name]['state']='streaming'
-            print(f"[{name}] streaming {len(metas)} estaciones desde {server['seedlink']}",flush=True)
+            print(f"[{name}] AUTOHEAL streaming {len(metas)} estaciones desde {seedlink}; metadata={final_station}; expand={expand}°",flush=True)
+            retry=5
             c.run()
+            raise RuntimeError('SeedLink terminó; forzando re-resolución')
         except Exception as e:
-            STATUS['servers'][name]={'state':'error','error':str(e),'seedlink':server.get('seedlink')}
-            print(f"[{name}] ERROR {e}",flush=True)
+            prev=STATUS['servers'].get(name,{})
+            STATUS['servers'][name]={**prev,'state':'error','error':str(e),
+                                     'retry_in_sec':retry,
+                                     'last_error_at':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())}
+            print(f"[{name}] AUTOHEAL ERROR {e}; reintentando en {retry}s",flush=True)
             traceback.print_exc()
-            time.sleep(15)
+            time.sleep(retry)
+            retry=min(60,retry*2)
 
 for srv in load_servers():
     threading.Thread(target=run_server,args=(srv,),name=f"seedlink-{srv['name']}",daemon=True).start()
 
-print(f"SISMO PERU WAVEFORM GATEWAY V2 listo. health :{S.gateway_port}; picker={STATUS['picker_active']}",flush=True)
+print(f"SISMO PERU WAVEFORM GATEWAY V2.1 AUTOHEAL listo. health :{S.gateway_port}; picker={STATUS['picker_active']}",flush=True)
 while True: time.sleep(60)
