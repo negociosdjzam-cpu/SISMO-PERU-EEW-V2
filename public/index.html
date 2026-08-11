@@ -7,10 +7,10 @@
 <title>SISMO PERÚ · Centro de Monitoreo Inteligente</title>
 <style>
 :root{
-  --bg1:#0b3149;--bg2:#164e65;--bg3:#17354f;
-  --panel:rgba(22,67,88,.74);--panel2:rgba(28,79,101,.72);
-  --line:rgba(153,220,233,.18);--line2:rgba(143,223,241,.28);
-  --text:#ecf8fb;--muted:#a9cad5;--soft:#d0e7ed;
+  --bg1:#0d3a53;--bg2:#18566d;--bg3:#183f59;
+  --panel:rgba(28,79,101,.86);--panel2:rgba(34,91,111,.82);
+  --line:rgba(170,231,242,.24);--line2:rgba(158,229,242,.34);
+  --text:#f8fdff;--muted:#c8e0e8;--soft:#e4f2f6;
   --blue:#59b8ff;--cyan:#4fe0e5;--teal:#43d9b1;--green:#56dc87;
   --yellow:#ffd45f;--orange:#ffae57;--red:#ff6a68;--violet:#a879ff;
   --shadow:0 20px 60px rgba(3,24,36,.22);
@@ -20,7 +20,13 @@
 html{scroll-behavior:smooth}
 body{
   margin:0;color:var(--text);
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",Arial,sans-serif;
+  font-size:14px;
+  font-weight:450;
+  line-height:1.38;
+  letter-spacing:.002em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
   background:
     radial-gradient(circle at 84% 2%,rgba(76,213,227,.18),transparent 27%),
     radial-gradient(circle at 18% 12%,rgba(92,123,255,.20),transparent 31%),
@@ -42,11 +48,11 @@ button{font:inherit}
   box-shadow:0 0 26px rgba(49,206,239,.16)
 }
 .logo svg{width:27px;height:27px}
-.brand-mini b{font-size:14px;letter-spacing:.04em}.brand-mini small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.brand-mini b{font-size:15px;letter-spacing:.035em;font-weight:800}.brand-mini small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
 .nav{display:flex;flex-direction:column;gap:7px}
 .nav button{
   border:1px solid transparent;background:transparent;color:#c7dee6;border-radius:11px;
-  padding:10px 9px;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;font-size:12px
+  padding:11px 9px;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer;font-size:13px;font-weight:600
 }
 .nav button:hover{background:rgba(90,181,239,.09);border-color:var(--line)}
 .nav button.active{background:linear-gradient(100deg,rgba(95,101,235,.62),rgba(67,138,231,.35));border-color:rgba(122,154,255,.45);color:white;box-shadow:0 10px 30px rgba(34,62,171,.16)}
@@ -55,8 +61,8 @@ button{font:inherit}
   margin-top:auto;border:1px solid rgba(86,220,135,.20);border-radius:14px;padding:11px;
   background:linear-gradient(180deg,rgba(43,119,126,.25),rgba(25,83,102,.23))
 }
-.safe{display:flex;gap:8px;align-items:center;font-size:11px;color:#8ff2bd;font-weight:800}
-.sidebar-bottom small{display:block;margin-top:7px;line-height:1.45;color:#b7d4dc;font-size:9px}
+.safe{display:flex;gap:8px;align-items:center;font-size:12px;color:#9af4c1;font-weight:800}
+.sidebar-bottom small{display:block;margin-top:7px;line-height:1.5;color:#d0e5eb;font-size:10px}
 
 .shell{min-width:0}
 .header{
@@ -66,7 +72,7 @@ button{font:inherit}
 }
 .header-brand{min-width:330px;display:flex;align-items:center;gap:12px}
 .header-brand .logo{width:42px;height:42px}
-.header-brand strong{font-size:23px;letter-spacing:.01em}.header-brand span{color:#c5dce4;font-size:14px}
+.header-brand strong{font-size:24px;letter-spacing:.01em;font-weight:850}.header-brand span{color:#d7e9ee;font-size:14px}
 .header-wave{height:58px;min-width:180px;flex:1;opacity:.74}
 .ai-top{
   display:flex;align-items:center;gap:10px;padding:7px 12px;border:1px solid rgba(80,216,235,.22);
@@ -83,8 +89,8 @@ button{font:inherit}
 .ai-orb:after,.ai-orb-sm:after{
   content:"";position:absolute;inset:-11%;border:1px dashed rgba(126,224,255,.35);border-radius:50%;animation:spin 11s linear infinite
 }
-.ai-top b{display:block;font-size:12px}.ai-top small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
-.datebox{min-width:118px;text-align:right}.datebox small{display:block;color:#b8d3dc;font-size:9px}.datebox b{font-size:18px}
+.ai-top b{display:block;font-size:13px;font-weight:800}.ai-top small{display:block;color:#d1e7ed;font-size:10px;margin-top:3px}
+.datebox{min-width:118px;text-align:right}.datebox small{display:block;color:#d0e3e9;font-size:10px}.datebox b{font-size:19px}
 .icon-btn{
   width:40px;height:40px;border-radius:11px;border:1px solid rgba(148,213,231,.18);background:rgba(57,102,126,.38);color:#d8edf2;display:grid;place-items:center;cursor:pointer
 }
@@ -105,9 +111,9 @@ button{font:inherit}
 .metric-icon.green{background:rgba(66,213,141,.13);border-color:rgba(75,235,159,.25)}
 .metric-icon.violet{background:rgba(151,103,249,.14);border-color:rgba(174,126,255,.28)}
 .metric-icon svg{width:25px;height:25px}
-.metric .label{font-size:10px;color:#c5dce4}.metric .big{font-size:21px;font-weight:850;margin-top:1px;letter-spacing:-.02em}.metric .caption{font-size:9px;color:var(--muted);margin-top:3px}
+.metric .label{font-size:11px;color:#e0eef2;font-weight:650}.metric .big{font-size:23px;font-weight:850;margin-top:2px;letter-spacing:-.02em}.metric .caption{font-size:10.5px;color:#c6dfe7;margin-top:4px;line-height:1.35}
 .sources-mini{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin-top:7px}
-.source-mini{font-size:12px;font-weight:750;display:flex;align-items:center;gap:6px}
+.source-mini{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px}
 .status-dot{width:8px;height:8px;border-radius:50%;background:#7d9ba6;box-shadow:0 0 0 3px rgba(125,155,166,.08)}
 .status-dot.ok{background:var(--green);box-shadow:0 0 14px rgba(86,220,135,.55)}
 .status-dot.warn{background:var(--yellow);box-shadow:0 0 12px rgba(255,212,95,.38)}
@@ -116,7 +122,7 @@ button{font:inherit}
 
 .top-grid{display:grid;grid-template-columns:1.48fr .72fr .94fr;gap:10px;margin-bottom:10px}
 .hero{padding:16px 18px;min-height:272px}
-.panel-title{font-size:14px;font-weight:850;display:flex;align-items:center;gap:8px}
+.panel-title{font-size:16px;font-weight:850;display:flex;align-items:center;gap:8px;color:#fff}
 .live-pill{font-size:8px;padding:4px 7px;border-radius:999px;background:rgba(49,213,162,.18);color:#69edb7;border:1px solid rgba(80,224,166,.18)}
 .hero-inner{display:grid;grid-template-columns:148px 1fr;gap:16px;align-items:center;margin-top:12px}
 .risk-ring{
@@ -127,27 +133,27 @@ button{font:inherit}
 .risk-ring:before{content:"";position:absolute;inset:12px;border-radius:50%;background:linear-gradient(145deg,#163f55,#123148);border:1px solid rgba(120,224,225,.22)}
 .risk-ring:after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(104,223,226,.18);animation:halo 3s ease-out infinite}
 .risk-icon{z-index:1;width:62px;height:62px;border-radius:18px;display:grid;place-items:center;background:rgba(66,220,139,.14);border:1px solid rgba(86,220,135,.25);font-size:30px}
-.level-label{font-size:10px;color:var(--muted);margin-bottom:3px}
-.level{font-size:25px;font-weight:900;color:var(--green);letter-spacing:-.02em}
-.level-sub{font-size:11px;color:#d0e6ec;margin-top:3px}
+.level-label{font-size:11px;color:#d2e6ec;margin-bottom:4px;font-weight:600}
+.level{font-size:28px;font-weight:900;color:var(--green);letter-spacing:-.025em;line-height:1.1}
+.level-sub{font-size:12.5px;color:#e5f2f5;margin-top:7px;line-height:1.45}
 .correlation-box{margin-top:12px;padding:10px 12px;border-radius:13px;border:1px solid rgba(136,205,222,.16);background:rgba(14,47,65,.27)}
 .correlation-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.correlation-count{font-size:18px;font-weight:900}.correlation-caption{font-size:9px;color:var(--muted)}
+.correlation-count{font-size:20px;font-weight:900}.correlation-caption{font-size:10.5px;color:#cde3e9;margin-top:2px}
 .nodes{display:flex;align-items:center;flex:1;max-width:260px}
 .node{width:13px;height:13px;border-radius:50%;border:1px solid #88aebc;background:#204357;position:relative}
 .node.on{background:var(--yellow);border-color:#ffe083;box-shadow:0 0 12px rgba(255,212,95,.5)}
 .node.candidate{background:var(--orange);border-color:#ffd0a1}
 .node+.node{margin-left:47px}
 .node+.node:before{content:"";position:absolute;width:47px;height:2px;background:#46697a;right:100%;top:5px}
-.hero-help{font-size:11px;color:#d6e9ef;line-height:1.45;margin-top:9px}
+.hero-help{font-size:12px;color:#edf7f9;line-height:1.5;margin-top:11px}
 
 .legend{padding:16px;min-height:272px}
 .legend-item{display:grid;grid-template-columns:12px 1fr;gap:8px;margin-top:13px}
-.legend-item b{font-size:11px}.legend-item small{display:block;color:#bad2da;font-size:9px;line-height:1.35;margin-top:2px}
+.legend-item b{font-size:12.5px;color:#fff}.legend-item small{display:block;color:#d3e7ec;font-size:10.5px;line-height:1.45;margin-top:3px}
 
 .map-card{padding:0;overflow:hidden;min-height:272px}
 .card-head{height:48px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
-.card-head b{font-size:13px}.tiny-btn{border:1px solid rgba(156,222,238,.15);background:rgba(51,100,123,.25);color:#cbe4eb;border-radius:999px;padding:6px 9px;font-size:9px;cursor:pointer}
+.card-head b{font-size:14.5px;color:#fff}.tiny-btn{border:1px solid rgba(156,222,238,.15);background:rgba(51,100,123,.25);color:#cbe4eb;border-radius:999px;padding:6px 9px;font-size:9px;cursor:pointer}
 .map{height:223px;position:relative;overflow:hidden;background:
   radial-gradient(circle at 55% 55%,rgba(76,227,213,.17),transparent 22%),
   linear-gradient(135deg,rgba(17,56,78,.58),rgba(31,78,94,.40))}
@@ -161,41 +167,51 @@ button{font:inherit}
 .map-point.station{width:5px;height:5px;background:#65e6a0;box-shadow:0 0 0 3px rgba(101,230,160,.09)}
 .target-radar{position:absolute;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;border:1px solid rgba(61,229,206,.35);animation:radar 2.8s ease-out infinite}
 .target-radar:after{content:"";position:absolute;inset:15px;border:1px solid rgba(73,229,212,.26);border-radius:50%}
-.target-label{position:absolute;right:10px;bottom:12px;border:1px solid rgba(123,211,227,.20);background:rgba(11,52,70,.82);border-radius:12px;padding:9px 11px;width:128px}
-.target-label b{font-size:12px}.target-label small{display:block;color:#b8d6dd;font-size:8px;margin-top:3px}.target-label .okline{color:#7aefad;margin-top:6px}
+.target-label{
+  position:absolute;right:12px;bottom:12px;z-index:12;width:164px;min-height:92px;
+  border:1px solid rgba(153,226,240,.32);
+  background:linear-gradient(145deg,rgba(8,47,65,.97),rgba(14,65,82,.96));
+  border-radius:14px;padding:12px 13px;overflow:hidden;
+  box-shadow:0 14px 36px rgba(2,23,34,.34);
+}
+.target-label b{display:block;font-size:15px;font-weight:850;color:#fff;line-height:1.2}
+.target-label small{display:block;color:#c8e0e7;font-size:10.5px;margin-top:5px}
+.map-status{display:flex;align-items:center;gap:8px;margin-top:10px;color:#9af2bc;font-size:11px;font-weight:750;line-height:1.25}
+.map-status .status-dot{flex:0 0 auto}
+.map-point,.target-radar{z-index:4}
 
 .middle-grid{display:grid;grid-template-columns:1.7fr .92fr;gap:10px;margin-bottom:10px}
 .stations-card{padding:14px;min-width:0}
 .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.section-head b{font-size:13px}.section-head button{border:0;background:none;color:#7eddf0;font-size:9px;cursor:pointer}
+.section-head b{font-size:14.5px;color:#fff}.section-head button{border:0;background:none;color:#8cecff;font-size:10.5px;font-weight:650;cursor:pointer}
 .station-row{display:grid;grid-template-columns:repeat(5,minmax(125px,1fr));gap:8px;margin-top:11px;overflow:hidden}
 .station{padding:10px;border-radius:13px;border:1px solid rgba(153,219,234,.13);background:linear-gradient(160deg,rgba(40,91,111,.50),rgba(21,62,82,.48));min-width:0}
-.station-top{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:850}.station-sub{font-size:8px;color:#a9cbd5;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.station-top{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:850}.station-sub{font-size:9.8px;color:#cfe4ea;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .flow{height:33px;margin:7px 0;position:relative;overflow:hidden;border-bottom:1px solid rgba(132,209,222,.10)}
 .flow svg{width:100%;height:100%}.flow path{fill:none;stroke:#63e6b2;stroke-width:1.5;vector-effect:non-scaling-stroke}
 .station.review .flow path{stroke:var(--yellow)}.station.off .flow path{stroke:#698b98}
-.tag{display:inline-flex;border-radius:999px;padding:4px 7px;font-size:8px;border:1px solid rgba(86,220,135,.18);background:rgba(67,198,128,.14);color:#8bf0b5}
+.tag{display:inline-flex;border-radius:999px;padding:5px 8px;font-size:9.5px;font-weight:650;border:1px solid rgba(86,220,135,.18);background:rgba(67,198,128,.14);color:#8bf0b5}
 .tag.review{border-color:rgba(255,212,95,.25);background:rgba(212,161,48,.17);color:#ffe084}.tag.off{border-color:rgba(150,177,186,.16);background:rgba(104,127,138,.14);color:#b3c6ce}
 
 .ai-card{padding:14px;display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center}
 .ai-visual{display:grid;place-items:center;position:relative}.ai-orb{display:grid;place-items:center}
 .ai-visual:before,.ai-visual:after{content:"";position:absolute;width:105px;height:105px;border-radius:50%;border:1px solid rgba(105,219,255,.16);animation:radar 3.3s ease-out infinite}
 .ai-visual:after{animation-delay:1.4s}
-.ai-copy h3{font-size:13px;margin:0 0 7px}.ai-copy p{font-size:11px;line-height:1.52;margin:0;color:#e1f0f4}.ai-copy .ai-note{margin-top:9px;font-size:9px;color:#6ff0c3;display:flex;gap:6px;align-items:flex-start}.ai-disclaimer{font-size:8px;color:#93b6c2;margin-top:6px}
+.ai-copy h3{font-size:15px;margin:0 0 8px;color:#fff}.ai-copy p{font-size:12.5px;line-height:1.55;margin:0;color:#f0f8fa}.ai-copy .ai-note{margin-top:10px;font-size:10.5px;color:#83f3c9;display:flex;gap:6px;align-items:flex-start}.ai-disclaimer{font-size:9.5px;color:#b9d3db;margin-top:7px}
 
 .bottom-grid{display:grid;grid-template-columns:1.4fr .92fr .73fr;gap:10px}
 .activity,.external,.stats{padding:14px}
 .activity-list{margin-top:9px;display:flex;flex-direction:column;gap:5px}
-.activity-item{display:grid;grid-template-columns:54px 24px 1fr auto;align-items:center;gap:7px;padding:7px 8px;border:1px solid rgba(135,205,222,.10);border-radius:10px;background:rgba(18,57,75,.24);font-size:9px}
+.activity-item{display:grid;grid-template-columns:58px 26px 1fr auto;align-items:center;gap:8px;padding:8px 9px;border:1px solid rgba(160,221,234,.14);border-radius:10px;background:rgba(18,57,75,.26);font-size:10.5px}
 .activity-time{color:#bbd7df}.activity-ico{width:20px;height:20px;border-radius:7px;display:grid;place-items:center;background:rgba(68,180,201,.17);font-size:10px}.activity-status{padding:3px 7px;border-radius:999px;background:rgba(69,192,127,.15);color:#8cebb2;border:1px solid rgba(88,215,145,.13);white-space:nowrap}
 .activity-status.warn{background:rgba(214,158,44,.15);color:#ffe080;border-color:rgba(255,212,95,.17)}
 .activity-status.info{background:rgba(67,140,223,.15);color:#a8d8ff;border-color:rgba(89,184,255,.16)}
 
 .external-list{margin-top:7px}.external-row{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;padding:9px 2px;border-bottom:1px solid rgba(140,208,223,.10)}
 .source-logo{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:8px;font-weight:900;background:rgba(74,156,213,.20);border:1px solid rgba(124,208,229,.14)}
-.external-row b{font-size:10px}.external-row small{display:block;color:#a8c7d1;font-size:8px;margin-top:2px}.source-state{font-size:8px;text-align:right}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.statbox{padding:10px;border:1px solid rgba(142,211,226,.12);border-radius:11px;background:rgba(18,57,75,.22)}.statbox small{display:block;color:#adcbd4;font-size:8px}.statbox b{font-size:18px;display:block;margin-top:4px}.statbox span{font-size:8px;color:#aac6cf}
-.footer{display:flex;justify-content:center;align-items:center;gap:15px;color:#91b5c1;font-size:8px;margin-top:12px;flex-wrap:wrap}.footer .sep{width:1px;height:12px;background:rgba(153,218,231,.25)}
+.external-row b{font-size:11.5px}.external-row small{display:block;color:#c5dce4;font-size:9.5px;margin-top:2px}.source-state{font-size:9.5px;text-align:right}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.statbox{padding:10px;border:1px solid rgba(142,211,226,.12);border-radius:11px;background:rgba(18,57,75,.22)}.statbox small{display:block;color:#d0e4e9;font-size:9.5px}.statbox b{font-size:20px;display:block;margin-top:4px}.statbox span{font-size:9px;color:#c4dbe2}
+.footer{display:flex;justify-content:center;align-items:center;gap:15px;color:#bfd8e0;font-size:9.5px;margin-top:12px;flex-wrap:wrap}.footer .sep{width:1px;height:12px;background:rgba(153,218,231,.25)}
 .settings-drawer{position:fixed;inset:0;background:rgba(3,20,30,.50);z-index:80;display:none;align-items:flex-start;justify-content:flex-end}.settings-drawer.open{display:flex}.settings-panel{width:min(380px,92vw);height:100%;padding:22px;background:linear-gradient(180deg,#16495e,#12384e);border-left:1px solid var(--line2);box-shadow:-30px 0 80px rgba(2,18,29,.35)}.settings-panel h2{margin:0;font-size:20px}.setting{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(150,215,229,.12)}.setting b{font-size:11px}.setting small{display:block;color:#a6c7d2;font-size:9px;margin-top:3px}.toggle{width:42px;height:23px;border-radius:999px;background:#456a7a;position:relative;cursor:pointer}.toggle:after{content:"";position:absolute;width:17px;height:17px;border-radius:50%;background:white;left:3px;top:3px;transition:.2s}.toggle.on{background:#44c994}.toggle.on:after{left:22px}
 
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -273,7 +289,7 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
         </article>
         <article class="card metric">
           <div class="metric-icon violet"><svg viewBox="0 0 24 24" fill="none" stroke="#C394FF" stroke-width="1.8"><path d="M2 12h3l2-7 4 14 3-12 3 10 2-5h3"/></svg></div>
-          <div><div class="label">Señales en vivo</div><div class="big" id="packetsTop">—</div><div class="caption">paquetes recibidos · sesión</div></div>
+          <div><div class="label">Datos sísmicos en vivo</div><div class="big" id="packetsTop">—</div><div class="caption">lecturas recibidas · sesión actual</div></div>
         </article>
         <article class="card metric">
           <div class="metric-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#5EE6F2" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
@@ -327,14 +343,18 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
               <path d="M45 29c50 14 79 44 95 79 18 39 35 73 83 94" stroke="rgba(87,193,210,.17)" stroke-width="1"/>
               <path d="M24 171c61-19 121-7 177 34" stroke="rgba(87,193,210,.12)" stroke-width="1"/>
             </svg>
-            <div class="target-label"><b id="mapTargetName">Huancayo</b><small>Objetivo principal</small><div class="okline">● Sin evento relevante</div></div>
+            <div class="target-label">
+  <b id="mapTargetName">Huancayo</b>
+  <small>Zona objetivo de monitoreo</small>
+  <div class="map-status"><span class="status-dot ok"></span><span>Sin evento relevante</span></div>
+</div>
           </div>
         </article>
       </section>
 
       <section class="middle-grid">
         <article id="estaciones" class="card stations-card">
-          <div class="section-head"><b>Actividad en estaciones · datos recibidos</b><button id="cycleStations">Ver más estaciones ›</button></div>
+          <div class="section-head"><b>Actividad de estaciones · señal en vivo</b><button id="cycleStations">Ver más estaciones ›</button></div>
           <div id="stationRow" class="station-row"></div>
         </article>
 
@@ -361,10 +381,10 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
         </article>
 
         <article id="reportes" class="card stats">
-          <div class="panel-title">Estadísticas · sesión actual</div>
+          <div class="panel-title">Resumen de la sesión actual</div>
           <div class="stats-grid">
-            <div class="statbox"><small>Señales recibidas</small><b id="statPackets">0</b><span>paquetes</span></div>
-            <div class="statbox"><small>Picks detectados</small><b id="statPicks">0</b><span>señales</span></div>
+            <div class="statbox"><small>Lecturas recibidas</small><b id="statPackets">0</b><span>datos sísmicos</span></div>
+            <div class="statbox"><small>Señales detectadas</small><b id="statPicks">0</b><span>en revisión</span></div>
             <div class="statbox"><small>Estaciones activas</small><b id="statStations">0</b><span>conectadas</span></div>
             <div class="statbox"><small>Tiempo en operación</small><b id="statUptime">—</b><span>sesión actual</span></div>
           </div>
@@ -415,6 +435,37 @@ function age(iso){
   if(s<3600)return `hace ${Math.round(s/60)} min`;
   return `hace ${Math.round(s/3600)} h`;
 }
+function secondsOld(iso){
+  if(!iso)return Infinity;
+  const ms=Date.now()-new Date(iso).getTime();
+  return Number.isFinite(ms)?Math.max(0,ms/1000):Infinity;
+}
+function waveformHealth(t){
+  const w=t.waveform?.status||{}, gs=w.servers?.GEOFON||{};
+  const last=w.last_waveform_at||gs.last_waveform_at;
+  const sec=secondsOld(last);
+  const packets=n(w.packets||gs.packets);
+  const stations=n(w.stations||gs.stations);
+
+  // La verdad operativa la decide la recepción de waveform reciente.
+  // AUTOHEAL puede estar trabajando en un proveedor sin que la red haya dejado de recibir datos.
+  if(stations>0 && packets>0 && sec<=20){
+    return {key:"live",label:"Activa",caption:"Recibiendo datos sísmicos en tiempo real",color:"#79efaa",fresh:true,ageSec:sec};
+  }
+  if(stations>0 && packets>0 && sec<=60){
+    return {key:"checking",label:"Verificando enlace",caption:"La última señal es reciente; comprobando continuidad",color:"#ffe07a",fresh:false,ageSec:sec};
+  }
+  if(gs.state==="streaming"){
+    return {key:"checking",label:"Conectada",caption:"Canal abierto; esperando la siguiente lectura",color:"#8deec0",fresh:false,ageSec:sec};
+  }
+  if(gs.state==="resolving" || gs.state==="discovered"){
+    return {key:"starting",label:"Iniciando",caption:"Preparando estaciones de monitoreo",color:"#9bdfff",fresh:false,ageSec:sec};
+  }
+  if(stations>0 || packets>0){
+    return {key:"stale",label:"Sin señal reciente",caption:"AUTOHEAL está revisando la conexión",color:"#ffe07a",fresh:false,ageSec:sec};
+  }
+  return {key:"starting",label:"Conectando",caption:"Preparando la red de monitoreo",color:"#9bdfff",fresh:false,ageSec:sec};
+}
 function uptime(iso){
   if(!iso)return "—";
   let sec=Math.max(0,(Date.now()-new Date(iso).getTime())/1000);
@@ -443,15 +494,35 @@ function sourceState(src){
   return ["Sin dato reciente","info"];
 }
 function statusModel(t){
-  const w=t.waveform?.status||{}, gs=w.servers?.GEOFON||{}, d=t.detection||{}, c=t.candidates?.latest||d.lastCandidate, ev=t.events?.latest;
-  const active=n(d.activeStationCount), req=n(d.minStations,4);
-  if(ev && n(ev.sourceCount)>=2) return {key:"corroborated",level:"EVENTO CORROBORADO",sub:"Fuentes externas coinciden. Revise la información oficial.",color:"var(--red)",icon:"!",progress:1};
-  if(c) return {key:"candidate",level:"POSIBLE EVENTO EN EVALUACIÓN",sub:"Varias estaciones coinciden. El motor está comprobando ubicación y consistencia.",color:"var(--orange)",icon:"!",progress:.88};
-  if(active>=req) return {key:"evaluating",level:"ANALIZANDO COINCIDENCIAS",sub:"Se alcanzó el mínimo de estaciones. Validando si pertenecen al mismo evento.",color:"var(--orange)",icon:"⌁",progress:.72};
-  if(active>=2) return {key:"correlating",level:"SEÑALES COINCIDENTES",sub:`${active} estaciones detectan actividad similar. Seguimos verificando.`,color:"var(--yellow)",icon:"≈",progress:.55};
-  if(active===1) return {key:"review",level:"SEÑAL EN REVISIÓN",sub:"Una estación detectó una señal. Todavía no hay evidencia suficiente de un sismo.",color:"var(--yellow)",icon:"?",progress:.34};
-  if(gs.state==="streaming") return {key:"normal",level:"EN OBSERVACIÓN",sub:"Todo en normalidad. Continuamos monitoreando.",color:"var(--green)",icon:"✓",progress:.82};
-  return {key:"network",level:"RED EN RECUPERACIÓN",sub:"El sistema está intentando recuperar el flujo de estaciones.",color:"var(--yellow)",icon:"↻",progress:.44};
+  const d=t.detection||{}, c=t.candidates?.latest||d.lastCandidate, ev=t.events?.latest;
+  const active=n(d.activeStationCount), req=Math.max(4,n(d.minStations,4));
+  const h=waveformHealth(t);
+
+  if(ev && n(ev.sourceCount)>=2)
+    return {key:"corroborated",level:"EVENTO CORROBORADO",sub:"Más de una fuente coincide. Revise inmediatamente la información oficial.",color:"var(--red)",icon:"!",progress:1};
+
+  if(c)
+    return {key:"candidate",level:"POSIBLE EVENTO EN EVALUACIÓN",sub:"Varias estaciones coinciden. El sistema está comprobando si pertenecen al mismo evento.",color:"var(--orange)",icon:"!",progress:.88};
+
+  if(active>=req)
+    return {key:"evaluating",level:"EVALUANDO SEÑALES",sub:"Ya existen suficientes estaciones coincidentes. Verificando consistencia y ubicación.",color:"var(--orange)",icon:"⌁",progress:.72};
+
+  if(active>=2)
+    return {key:"correlating",level:"VARIAS SEÑALES EN REVISIÓN",sub:`${active} estaciones muestran actividad compatible dentro de la ventana actual.`,color:"var(--yellow)",icon:"≈",progress:.55};
+
+  if(active===1)
+    return {key:"review",level:"SEÑAL AISLADA EN REVISIÓN",sub:"Una estación detectó algo inusual. Por sí sola no significa que exista un sismo.",color:"var(--yellow)",icon:"?",progress:.34};
+
+  if(h.key==="live")
+    return {key:"normal",level:"MONITOREO NORMAL",sub:"La red está activa y no hay coincidencias sísmicas relevantes en este momento.",color:"var(--green)",icon:"✓",progress:.86};
+
+  if(h.key==="checking")
+    return {key:"checking",level:"VERIFICANDO CONEXIÓN",sub:"La red tuvo actividad reciente. El sistema está comprobando que el flujo continúe estable.",color:"var(--yellow)",icon:"↻",progress:.55};
+
+  if(h.key==="starting")
+    return {key:"starting",level:"INICIANDO MONITOREO",sub:"Preparando la conexión con las estaciones sísmicas.",color:"var(--blue)",icon:"↻",progress:.38};
+
+  return {key:"network",level:"SIN SEÑAL RECIENTE",sub:"No han llegado nuevas lecturas recientemente. AUTOHEAL está revisando la conexión.",color:"var(--yellow)",icon:"↻",progress:.44};
 }
 function aiNarrative(t,m){
   const w=t.waveform?.status||{}, d=t.detection||{}, gs=w.servers?.GEOFON||{}, es=w.servers?.EARTHSCOPE||{};
@@ -472,9 +543,9 @@ function aiNarrative(t,m){
     `La red está estable y ya procesó ${fmt(packets)} paquetes. Se registraron ${picks} señal(es) aislada(s) durante esta sesión, pero ninguna mantiene coincidencia activa ahora.`,
     "El sistema permanece en observación y descarta señales que no se repiten en varias estaciones."
   ];
-  if(gs.state==="streaming") return [
-    `La red sísmica está activa con ${fmt(w.stations||gs.stations)} estaciones seleccionadas y ${fmt(packets)} paquetes recibidos en esta sesión. No hay señales coincidentes en este momento.`,
-    es.state==="error" ? "GEOFON sigue operativo; EarthScope se recupera automáticamente en segundo plano." : "Todas las fuentes disponibles continúan bajo supervisión."
+  if(waveformHealth(t).key==="live") return [
+    `La red está activa. Estamos recibiendo datos de ${fmt(w.stations||gs.stations)} estaciones y no hay coincidencias sísmicas relevantes en este momento.`,
+    es.state==="error" ? "Una fuente secundaria está reintentando su conexión, pero el monitoreo principal continúa recibiendo datos." : "El monitoreo continúa automáticamente las 24 horas."
   ];
   return [
     "El sistema está intentando restablecer la recepción de datos sísmicos. La interfaz seguirá actualizándose automáticamente.",
@@ -572,28 +643,31 @@ function render(t){
   const w=t.waveform?.status||{},gs=w.servers?.GEOFON||{},es=w.servers?.EARTHSCOPE||{},d=t.detection||{},src=t.sources||{},m=statusModel(t);
   updateStationHistory(t);
 
-  const networkOk=gs.state==="streaming";
-  $("#networkState").textContent=networkOk?"Activa":gs.state==="error"?"Recuperando":"Conectando";
-  $("#networkState").style.color=networkOk?"#70efa6":"#ffe080";
-  $("#networkCaption").textContent=networkOk?"Datos sísmicos entrando en tiempo real":"AUTOHEAL intentando recuperar la red";
+  const health=waveformHealth(t);
+  const networkOk=health.key==="live";
+  $("#networkState").textContent=health.label;
+  $("#networkState").style.color=health.color;
+  $("#networkCaption").textContent=health.caption;
   $("#stationsTop").textContent=fmt(w.stations||gs.stations);
-  $("#stationsCaption").textContent=networkOk?`${fmt(gs.stations||w.stations)} en línea`:"estado parcial";
+  $("#stationsCaption").textContent=(w.stations||gs.stations)>0?`${fmt(gs.stations||w.stations)} estaciones disponibles`:"preparando estaciones";
   $("#packetsTop").textContent=fmt(w.packets||gs.packets);
   $("#lastActivityTop").textContent=age(w.last_waveform_at||gs.last_waveform_at).replace("hace ","hace ");
   setDot($("#emscDot"),src.EMSC?.state);setDot($("#usgsDot"),src.USGS?.state);
   const igp=(t.events?.latest?.sources||[]).includes("IGP");setDot($("#igpDot"),igp?"ok":"waiting");
-  $("#sourcesCaption").textContent=igp?"IGP ya corroboró un evento":"IGP disponible como entrada de corroboración";
+  $("#sourcesCaption").textContent=igp?"IGP ya corroboró un evento":"IGP se utiliza para corroboración oficial";
 
   $("#levelText").textContent=m.level;$("#levelText").style.color=m.color;$("#levelSub").textContent=m.sub;$("#riskIcon").textContent=m.icon;
   $("#riskRing").style.background=`conic-gradient(${m.color} 0 ${Math.round(m.progress*100)}%,rgba(104,209,225,.12) ${Math.round(m.progress*100)}% 100%)`;
   $("#corrCurrent").textContent=n(d.activeStationCount);$("#corrRequired").textContent=Math.max(4,n(d.minStations,4));renderNodes(d);
   const active=n(d.activeStationCount),need=Math.max(0,Math.max(4,n(d.minStations,4))-active);
-  $("#heroHelp").textContent=active?`Hay ${active} estación(es) coincidentes. ${need?`Faltan ${need} para iniciar una evaluación multies­tación.`:"El motor ya está evaluando consistencia y ubicación."}`:"Necesitamos señales similares en varias estaciones para considerar un posible evento.";
+  $("#heroHelp").textContent=active
+    ? `Hay ${active} estación(es) coincidentes ahora. ${need?`Necesitamos ${need} más antes de evaluar un posible sismo.`:"Ya existen suficientes estaciones; estamos comprobando si realmente corresponden al mismo evento."}`
+    : "Para considerar un posible sismo, varias estaciones deben detectar señales compatibles dentro de pocos segundos.";
 
   const [summary,action]=aiNarrative(t,m);$("#aiSummary").textContent=summary;$("#aiAction").textContent=action;$("#aiTopState").textContent=m.key==="normal"?"Monitoreo continuo 24/7":"Revisión inteligente en curso";
 
   $("#statPackets").textContent=fmt(w.packets||gs.packets);$("#statPicks").textContent=fmt(d.totalPicks);$("#statStations").textContent=fmt(w.stations||gs.stations);$("#statUptime").textContent=uptime(w.started_at);
-  $("#sidebarSafe").textContent=networkOk?"Sistema seguro":"Red en recuperación";
+  $("#sidebarSafe").textContent=networkOk?"Monitoreo activo":health.key==="starting"?"Iniciando monitoreo":"Conexión en revisión";
 
   renderStations(t);renderMap(t);renderActivity(t);renderSources(t);
   packetHistory.push(n(w.packets||gs.packets));if(packetHistory.length>100)packetHistory.shift();
