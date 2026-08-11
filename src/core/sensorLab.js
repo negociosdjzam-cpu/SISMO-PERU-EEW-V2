@@ -214,6 +214,7 @@ export class SensorLab {
 
     return {
       id:`SENSOR-${Date.now()}`,
+      createdAt:new Date().toISOString(),
       classification: confidence>=0.80 ? "SENSOR_CANDIDATE_HIGH" : "SENSOR_CANDIDATE",
       isEarlyWarning:false,
       warningLabel:"Candidato experimental por picks P; requiere corroboración",

@@ -79,11 +79,106 @@ const usgs = new UsgsSource({
 emsc.start();
 usgs.start();
 
+function _ageSec(iso) {
+  if (!iso) return Infinity;
+  const ms = Date.now() - new Date(iso).getTime();
+  return Number.isFinite(ms) ? Math.max(0, ms / 1000) : Infinity;
+}
+
+function buildAlertState() {
+  const detection = sensorLab.getTelemetry();
+  const candidate = sensorCandidates[0] || detection.lastCandidate || null;
+  const event = fusion.latest();
+
+  const targetArrival = (x) => {
+    if (!x?.arrivals?.length) return null;
+    return x.arrivals.find(a => a.targetId === targets[0]?.id) || x.arrivals[0] || null;
+  };
+
+  // Nivel 3: fuente oficial peruana. No se expresa como "100%" porque ninguna
+  // medición sísmica debe presentarse como certeza matemática absoluta.
+  if (event?.hasOfficialPeru && _ageSec(event.time) <= 300) {
+    return {
+      level:3,
+      code:"OFFICIAL_CONFIRMED",
+      severity:"danger",
+      title:"SISMO CONFIRMADO POR FUENTE OFICIAL",
+      message:"El evento coincide con una entrada oficial del IGP. Protégete ahora y sigue las indicaciones de las autoridades.",
+      action:"AGÁCHATE · CÚBRETE · SUJÉTATE",
+      source:"IGP",
+      eventId:event.id,
+      confidence:event.confidence,
+      arrival:targetArrival(event),
+      experimental:false,
+      at:new Date().toISOString()
+    };
+  }
+
+  // Nivel 2: dos o más fuentes externas independientes coinciden y el evento
+  // es reciente. Es una corroboración fuerte, aunque no equivale a un boletín IGP.
+  if (event?.sourceCount >= 2 && _ageSec(event.time) <= 180) {
+    return {
+      level:2,
+      code:"CORROBORATED_EVENT",
+      severity:"danger",
+      title:"SISMO CORROBORADO · PROTÉGETE",
+      message:`Coinciden ${event.sourceCount} fuentes independientes (${(event.sources||[]).join(", ")}).`,
+      action:"AGÁCHATE · CÚBRETE · SUJÉTATE",
+      source:(event.sources||[]).join(" + "),
+      eventId:event.id,
+      confidence:event.confidence,
+      arrival:targetArrival(event),
+      experimental:false,
+      at:new Date().toISOString()
+    };
+  }
+
+  // Nivel 1: solo nuestra red de formas de onda. Requiere 4+ estaciones,
+  // buena coherencia temporal y alta confianza antes de mostrar PREALERTA.
+  if (
+    candidate &&
+    _ageSec(candidate.createdAt || candidate.time) <= 60 &&
+    Number(candidate.stationCount) >= Math.max(4, sensorLab.minStations) &&
+    Number(candidate.confidence) >= 0.82 &&
+    Number(candidate.residualRmsSec) <= 1.0
+  ) {
+    return {
+      level:1,
+      code:"EXPERIMENTAL_PREALERT",
+      severity:"warning",
+      title:"POSIBLE SISMO · PREPÁRATE",
+      message:`${candidate.stationCount} estaciones presentan señales compatibles. La detección aún es experimental y espera corroboración externa.`,
+      action:"PREPÁRATE PARA PROTEGERTE",
+      source:"Red sísmica experimental",
+      eventId:candidate.id,
+      confidence:candidate.confidence,
+      arrival:targetArrival(candidate),
+      experimental:true,
+      at:new Date().toISOString()
+    };
+  }
+
+  return {
+    level:0,
+    code:"NORMAL",
+    severity:"normal",
+    title:"MONITOREO NORMAL",
+    message:"No hay un evento sísmico que cumpla los criterios de alerta.",
+    action:null,
+    source:null,
+    eventId:null,
+    confidence:null,
+    arrival:null,
+    experimental:false,
+    at:new Date().toISOString()
+  };
+}
+
 function telemetryPayload() {
   return {
     ok:true,
     service:"SISMO PERU EEW TELEMETRY",
-    version:"2.3.0",
+    version:"2.6.0",
     now:new Date().toISOString(),
     warning:"Telemetría experimental. Un PICK no equivale a terremoto ni a alerta oficial.",
     targets,
@@ -94,6 +189,7 @@ function telemetryPayload() {
       count:sensorCandidates.length,
       latest:sensorCandidates[0] || null
     },
+    alert:buildAlertState(),
     events:{
       count:fusion.list(500).length,
       latest:fusion.latest()
@@ -105,7 +201,7 @@ app.get("/health", (_req,res) => {
   res.json({
     ok:true,
     service:"SISMO PERU FUSION ENGINE",
-    version:"2.3.0",
+    version:"2.6.0",
     now:new Date().toISOString(),
     sources:status,
     waveformTelemetryAt:waveformTelemetry.receivedAt
@@ -127,6 +223,7 @@ app.get("/api/eew/status", (_req,res) => {
 });
 
 app.get("/api/eew/telemetry", (_req,res) => res.json(telemetryPayload()));
+app.get("/api/eew/alert-state", (_req,res) => res.json({ok:true,alert:buildAlertState()}));
 app.get("/api/eew/latest", (_req,res) => res.json({ok:true,event:fusion.latest()}));
 app.get("/api/eew/events", (req,res) => {
   const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
@@ -142,7 +239,7 @@ app.get("/api/eew/stream", (req,res) => {
     "X-Accel-Buffering":"no"
   });
   res.flushHeaders?.();
-  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,version:"2.3.0",now:new Date().toISOString()})}\n\n`);
+  res.write(`event: hello\ndata: ${JSON.stringify({ok:true,version:"2.6.0",now:new Date().toISOString()})}\n\n`);
   sseClients.add(res);
   const keep = setInterval(() => {
     try { res.write(`: ping ${Date.now()}\n\n`); } catch {}
@@ -229,6 +326,6 @@ app.get("/api/eew/public-signal", (_req,res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`[SISMO PERU EEW V2.3] escuchando en :${PORT}`);
-  console.log(`[SISMO PERU EEW V2.3] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
+  console.log(`[SISMO PERU EEW V2.6] escuchando en :${PORT}`);
+  console.log(`[SISMO PERU EEW V2.6] objetivo(s): ${targets.map(t=>t.name).join(", ")}`);
 });

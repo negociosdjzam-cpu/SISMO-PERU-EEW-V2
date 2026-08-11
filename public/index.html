@@ -212,6 +212,32 @@ button{font:inherit}
 .external-row b{font-size:11.5px}.external-row small{display:block;color:#c5dce4;font-size:9.5px;margin-top:2px}.source-state{font-size:9.5px;text-align:right}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.statbox{padding:10px;border:1px solid rgba(142,211,226,.12);border-radius:11px;background:rgba(18,57,75,.22)}.statbox small{display:block;color:#d0e4e9;font-size:9.5px}.statbox b{font-size:20px;display:block;margin-top:4px}.statbox span{font-size:9px;color:#c4dbe2}
 .footer{display:flex;justify-content:center;align-items:center;gap:15px;color:#bfd8e0;font-size:9.5px;margin-top:12px;flex-wrap:wrap}.footer .sep{width:1px;height:12px;background:rgba(153,218,231,.25)}
+.alert-overlay{
+  position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;
+  padding:22px;background:rgba(3,18,27,.72);backdrop-filter:blur(14px)
+}
+.alert-overlay.show{display:flex}
+.alert-box{
+  width:min(690px,94vw);border-radius:24px;padding:24px 25px 20px;text-align:center;
+  border:1px solid rgba(255,204,95,.44);
+  background:linear-gradient(150deg,rgba(79,55,14,.98),rgba(35,57,66,.98));
+  box-shadow:0 28px 100px rgba(0,0,0,.48),0 0 60px rgba(255,181,64,.15)
+}
+.alert-box.danger{
+  border-color:rgba(255,106,104,.58);
+  background:linear-gradient(150deg,rgba(101,30,35,.98),rgba(49,39,50,.98));
+  box-shadow:0 28px 100px rgba(0,0,0,.52),0 0 75px rgba(255,75,75,.20)
+}
+.alert-kicker{font-size:12px;font-weight:850;letter-spacing:.12em;color:#ffe291;text-transform:uppercase}
+.alert-box.danger .alert-kicker{color:#ffc1bf}
+.alert-title{font-size:clamp(29px,5vw,50px);font-weight:950;line-height:1.04;margin:10px 0 12px;letter-spacing:-.035em;color:#fff}
+.alert-message{font-size:15px;line-height:1.5;color:#f5fbfd;max-width:590px;margin:0 auto}
+.alert-action{font-size:21px;font-weight:950;margin-top:18px;color:#fff}
+.alert-eta{margin:12px auto 0;padding:10px 14px;border-radius:12px;background:rgba(6,28,38,.35);width:max-content;max-width:100%;font-size:13px}
+.alert-meta{font-size:10px;color:#d5e6ea;margin-top:12px}
+.alert-controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:18px}
+.alert-controls button{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.10);color:#fff;border-radius:11px;padding:10px 16px;font-weight:800;cursor:pointer}
+.alert-controls button.primary{background:#fff;color:#183342}
 .settings-drawer{position:fixed;inset:0;background:rgba(3,20,30,.50);z-index:80;display:none;align-items:flex-start;justify-content:flex-end}.settings-drawer.open{display:flex}.settings-panel{width:min(380px,92vw);height:100%;padding:22px;background:linear-gradient(180deg,#16495e,#12384e);border-left:1px solid var(--line2);box-shadow:-30px 0 80px rgba(2,18,29,.35)}.settings-panel h2{margin:0;font-size:20px}.setting{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(150,215,229,.12)}.setting b{font-size:11px}.setting small{display:block;color:#a6c7d2;font-size:9px;margin-top:3px}.toggle{width:42px;height:23px;border-radius:999px;background:#456a7a;position:relative;cursor:pointer}.toggle:after{content:"";position:absolute;width:17px;height:17px;border-radius:50%;background:white;left:3px;top:3px;transition:.2s}.toggle.on{background:#44c994}.toggle.on:after{left:22px}
 
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -272,6 +298,7 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
         <div><b>IA Analizando</b><small id="aiTopState">Interpretando telemetría 24/7</small></div>
       </div>
       <div class="datebox"><small id="dateText">—</small><b id="timeText">—</b></div>
+      <button class="tiny-btn" id="alertsButton" style="padding:9px 12px;font-weight:800;white-space:nowrap">🔔 Activar alertas</button>
       <button class="icon-btn" id="openSettings2" aria-label="Configuración">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-5l-.4 3a8 8 0 0 0-1.7 1L5 6 3 9.4 5 11a7 7 0 0 0 0 2l-2 1.6L5 18l2.4-1a8 8 0 0 0 1.7 1l.4 3h5l.4-3a8 8 0 0 0 1.7-1l2.4 1 2-3.4L19 13a7 7 0 0 0 0-1Z"/></svg>
       </button>
@@ -400,13 +427,39 @@ body.compact .map-card{min-height:245px}.body.compact .map{height:196px}
   </div>
 </div>
 
+<div class="alert-overlay" id="alertOverlay" role="alertdialog" aria-modal="true">
+  <div class="alert-box" id="alertBox">
+    <div class="alert-kicker" id="alertKicker">ALERTA SISMO PERÚ</div>
+    <div class="alert-title" id="alertTitle">POSIBLE SISMO</div>
+    <p class="alert-message" id="alertMessage">Analizando...</p>
+    <div class="alert-action" id="alertAction"></div>
+    <div class="alert-eta" id="alertEta" style="display:none"></div>
+    <div class="alert-meta" id="alertMeta"></div>
+    <div class="alert-controls">
+      <button class="primary" id="alertAcknowledge">ENTENDIDO</button>
+      <button id="alertMute">Silenciar sonido</button>
+    </div>
+  </div>
+</div>
+
 <div class="settings-drawer" id="settingsDrawer">
   <div class="settings-panel">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h2>Configuración visual</h2><div style="color:#a9cbd5;font-size:10px;margin-top:4px">Solo modifica la interfaz. No cambia el detector.</div></div><button class="icon-btn" id="closeSettings">×</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h2>Configuración visual</h2><div style="color:#c7e0e7;font-size:10px;margin-top:4px">Configura avisos y apariencia. Los criterios sísmicos permanecen protegidos.</div></div><button class="icon-btn" id="closeSettings">×</button></div>
     <div class="setting"><div><b>Reducir animaciones</b><small>Útil en equipos más lentos.</small></div><div class="toggle" id="motionToggle"></div></div>
     <div class="setting"><div><b>Vista compacta</b><small>Reduce espacios para mostrar más información.</small></div><div class="toggle" id="compactToggle"></div></div>
     <div class="setting"><div><b>Actualización automática</b><small>Telemetría cada 2 segundos.</small></div><div style="font-size:10px;color:#72edbb">ACTIVA</div></div>
-    <div class="setting"><div><b>Motor de alerta pública</b><small>Permanece separado de esta interfaz experimental.</small></div><div style="font-size:10px;color:#ffd45f">NO ACTIVADO</div></div>
+    <div class="setting">
+  <div><b>Alertas del navegador</b><small>Sonido, pantalla de emergencia y notificación local.</small></div>
+  <button class="tiny-btn" id="enableAlertsSettings">Activar</button>
+</div>
+<div class="setting">
+  <div><b>Prealerta experimental</b><small>Avisa también con 4+ estaciones antes de corroboración externa. Puede tener falsos positivos.</small></div>
+  <div class="toggle" id="prealertToggle"></div>
+</div>
+<div class="setting">
+  <div><b>Confirmación requerida</b><small>Las alertas rojas exigen IGP o 2+ fuentes independientes.</small></div>
+  <div style="font-size:10px;color:#83f3c9;font-weight:800">ACTIVA</div>
+</div>
   </div>
 </div>
 
@@ -416,6 +469,12 @@ const stationHistory=new Map();
 const packetHistory=[];
 let latestTelemetry=null;
 let stationPage=0;
+let audioCtx=null;
+let alertsEnabled=localStorage.getItem("sismo_alerts_enabled")==="1";
+let experimentalPrealerts=localStorage.getItem("sismo_prealerts_enabled")==="1";
+let mutedAlerts=false;
+let lastAlertKey="";
+let lastAlertLevel=0;
 
 const fallbackStations=[
   ["CX.PB18",-17.58954,-69.48],["CX.PB16",-18.33510,-69.50767],["CX.PB12",-18.61406,-70.32809],
@@ -435,6 +494,8 @@ function age(iso){
   if(s<3600)return `hace ${Math.round(s/60)} min`;
   return `hace ${Math.round(s/3600)} h`;
 }
+const networkLatch={lastGoodAt:0};
+
 function secondsOld(iso){
   if(!iso)return Infinity;
   const ms=Date.now()-new Date(iso).getTime();
@@ -447,24 +508,36 @@ function waveformHealth(t){
   const packets=n(w.packets||gs.packets);
   const stations=n(w.stations||gs.stations);
 
-  // La verdad operativa la decide la recepción de waveform reciente.
-  // AUTOHEAL puede estar trabajando en un proveedor sin que la red haya dejado de recibir datos.
-  if(stations>0 && packets>0 && sec<=20){
-    return {key:"live",label:"Activa",caption:"Recibiendo datos sísmicos en tiempo real",color:"#79efaa",fresh:true,ageSec:sec};
+  // V2.6: estado estable con histéresis.
+  // Si SeedLink sigue en streaming, la red se considera ACTIVA aunque una
+  // lectura concreta tarde decenas de segundos. La antigüedad se muestra
+  // como telemetría, no como una falsa alarma de red.
+  if(gs.state==="streaming" && stations>0){
+    networkLatch.lastGoodAt=Date.now();
+    return {key:"live",label:"Activa",caption:"Monitoreo sísmico operativo",color:"#79efaa",fresh:sec<=90,ageSec:sec};
   }
-  if(stations>0 && packets>0 && sec<=60){
-    return {key:"checking",label:"Verificando enlace",caption:"La última señal es reciente; comprobando continuidad",color:"#ffe07a",fresh:false,ageSec:sec};
+
+  // Si el estado técnico cambia brevemente durante AUTOHEAL pero recibimos
+  // datos hace menos de 90 s, mantenemos el estado estable.
+  if(stations>0 && packets>0 && sec<=90){
+    networkLatch.lastGoodAt=Date.now();
+    return {key:"live",label:"Activa",caption:"Recibiendo datos · enlace en revalidación automática",color:"#79efaa",fresh:true,ageSec:sec};
   }
-  if(gs.state==="streaming"){
-    return {key:"checking",label:"Conectada",caption:"Canal abierto; esperando la siguiente lectura",color:"#8deec0",fresh:false,ageSec:sec};
+
+  // Grace period de 2 minutos para evitar saltos visuales por reconexiones cortas.
+  if(networkLatch.lastGoodAt && Date.now()-networkLatch.lastGoodAt<=120000){
+    return {key:"live",label:"Activa",caption:"Monitoreo activo · revalidando una conexión secundaria",color:"#79efaa",fresh:false,ageSec:sec};
   }
+
+  if(stations>0 && packets>0 && sec<=180){
+    return {key:"checking",label:"Enlace en revisión",caption:"No hay una lectura reciente; AUTOHEAL está comprobando continuidad",color:"#ffe07a",fresh:false,ageSec:sec};
+  }
+
   if(gs.state==="resolving" || gs.state==="discovered"){
     return {key:"starting",label:"Iniciando",caption:"Preparando estaciones de monitoreo",color:"#9bdfff",fresh:false,ageSec:sec};
   }
-  if(stations>0 || packets>0){
-    return {key:"stale",label:"Sin señal reciente",caption:"AUTOHEAL está revisando la conexión",color:"#ffe07a",fresh:false,ageSec:sec};
-  }
-  return {key:"starting",label:"Conectando",caption:"Preparando la red de monitoreo",color:"#9bdfff",fresh:false,ageSec:sec};
+
+  return {key:"stale",label:"Sin señal reciente",caption:"AUTOHEAL está intentando recuperar el flujo",color:"#ffe07a",fresh:false,ageSec:sec};
 }
 function uptime(iso){
   if(!iso)return "—";
@@ -638,9 +711,93 @@ function renderSources(t){
   ];
   box.innerHTML=rows.map(r=>`<div class="external-row"><div class="source-logo">${r.name}</div><div><b>${r.name}</b><small>${r.sub}</small></div><div class="source-state"><span class="status-dot ${r.state[1]}"></span> ${r.state[0]}<small>${r.at?age(r.at):"—"}</small></div></div>`).join("");
 }
+function alertSeverity(a){return n(a?.level)}
+function alertKey(a){return `${a?.code||"NORMAL"}:${a?.eventId||""}`}
+
+function primeAudio(){
+  try{
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+  }catch{}
+}
+function tone(freq,start,duration,gain=.11){
+  if(!audioCtx||mutedAlerts)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type="sine";o.frequency.value=freq;
+  g.gain.setValueAtTime(0,audioCtx.currentTime+start);
+  g.gain.linearRampToValueAtTime(gain,audioCtx.currentTime+start+.02);
+  g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+start+duration);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(audioCtx.currentTime+start);o.stop(audioCtx.currentTime+start+duration+.03);
+}
+function playAlertSound(level){
+  if(!alertsEnabled||mutedAlerts)return;
+  primeAudio();
+  if(level>=2){
+    [0,.28,.56,.95,1.23,1.51].forEach((s,i)=>tone(i<3?780:980,s,.20,.15));
+    navigator.vibrate?.([250,120,250,120,450]);
+  }else{
+    tone(620,0,.22,.10);tone(820,.34,.28,.11);
+    navigator.vibrate?.([180,100,180]);
+  }
+}
+async function enableAlerts(){
+  alertsEnabled=true;mutedAlerts=false;
+  localStorage.setItem("sismo_alerts_enabled","1");
+  primeAudio();
+  if("Notification" in window && Notification.permission==="default"){
+    try{await Notification.requestPermission()}catch{}
+  }
+  updateAlertButtons();
+}
+function updateAlertButtons(){
+  const label=alertsEnabled?"🔔 Alertas activas":"🔔 Activar alertas";
+  $("#alertsButton").textContent=label;
+  $("#enableAlertsSettings").textContent=alertsEnabled?"Activadas":"Activar";
+  $("#prealertToggle").classList.toggle("on",experimentalPrealerts);
+}
+function showSystemNotification(a){
+  if(!alertsEnabled||!("Notification" in window)||Notification.permission!=="granted")return;
+  try{
+    new Notification(a.title,{body:`${a.message}${a.action?` · ${a.action}`:""}`,tag:alertKey(a),renotify:true,requireInteraction:a.level>=2});
+  }catch{}
+}
+function etaText(a){
+  const s=n(a?.arrival?.sSecondsRemaining,NaN);
+  if(!Number.isFinite(s))return "";
+  if(s>0)return `Estimación de laboratorio para ${a.arrival.targetName||"objetivo"}: onda S en ~${Math.ceil(s)} s`;
+  return `La llegada teórica de la onda S al objetivo ya habría ocurrido`;
+}
+function presentAlert(a){
+  const lvl=alertSeverity(a);
+  if(lvl<=0)return;
+  if(lvl===1 && !experimentalPrealerts)return;
+  if(!alertsEnabled && lvl<2)return;
+
+  const key=alertKey(a);
+  if(key===lastAlertKey && lvl<=lastAlertLevel)return;
+  lastAlertKey=key;lastAlertLevel=lvl;
+
+  $("#alertBox").classList.toggle("danger",lvl>=2);
+  $("#alertKicker").textContent=lvl>=2?"ALERTA SÍSMICA":"PREALERTA EXPERIMENTAL";
+  $("#alertTitle").textContent=a.title||"ALERTA";
+  $("#alertMessage").textContent=a.message||"";
+  $("#alertAction").textContent=a.action||"";
+  const eta=etaText(a),etaEl=$("#alertEta");
+  etaEl.style.display=eta?"block":"none";etaEl.textContent=eta;
+  $("#alertMeta").textContent=a.experimental
+    ? "Detección propia experimental · no sustituye IGP/INDECI"
+    : `Corroboración: ${a.source||"fuentes externas"} · no representa certeza matemática del 100%`;
+  $("#alertOverlay").classList.add("show");
+
+  playAlertSound(lvl);
+  showSystemNotification(a);
+}
+
 function render(t){
   latestTelemetry=t;
   const w=t.waveform?.status||{},gs=w.servers?.GEOFON||{},es=w.servers?.EARTHSCOPE||{},d=t.detection||{},src=t.sources||{},m=statusModel(t);
+  presentAlert(t.alert||null);
   updateStationHistory(t);
 
   const health=waveformHealth(t);
@@ -691,6 +848,16 @@ const motion=$("#motionToggle"),compact=$("#compactToggle");
 if(localStorage.getItem("sismo_reduce_motion")==="1"){motion.classList.add("on");document.body.classList.add("reduce-motion")}
 if(localStorage.getItem("sismo_compact")==="1"){compact.classList.add("on");document.body.classList.add("compact")}
 motion.onclick=()=>toggleSetting(motion,"reduce-motion","sismo_reduce_motion");compact.onclick=()=>toggleSetting(compact,"compact","sismo_compact");
+$("#alertsButton").onclick=enableAlerts;
+$("#enableAlertsSettings").onclick=enableAlerts;
+$("#prealertToggle").onclick=()=>{
+  experimentalPrealerts=!experimentalPrealerts;
+  localStorage.setItem("sismo_prealerts_enabled",experimentalPrealerts?"1":"0");
+  updateAlertButtons();
+};
+$("#alertAcknowledge").onclick=()=>$("#alertOverlay").classList.remove("show");
+$("#alertMute").onclick=()=>{mutedAlerts=true;$("#alertOverlay").classList.remove("show")};
+updateAlertButtons();
 
 function drawHeaderWave(){
   const c=$("#headerWave"),dpr=window.devicePixelRatio||1,rect=c.getBoundingClientRect();if(rect.width<10)return;
